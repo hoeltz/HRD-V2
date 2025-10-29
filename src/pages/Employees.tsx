@@ -1,25 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { getFromStorage, setToStorage } from '../utils/storage';
 import { Employee } from '../utils/types';
+import TabbedEmployeeForm from '../components/TabbedEmployeeForm';
 
 const Employees: React.FC = () => {
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [filteredEmployees, setFilteredEmployees] = useState<Employee[]>([]);
   const [searchTerm, setSearchTerm] = useState('');
   const [departmentFilter, setDepartmentFilter] = useState('');
-  const [showAddModal, setShowAddModal] = useState(false);
+  const [showForm, setShowForm] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
-  const [formData, setFormData] = useState<Partial<Employee>>({
-    name: '',
-    email: '',
-    position: '',
-    department: '',
-    joinDate: '',
-    phone: '',
-    birthDate: '',
-    status: 'active',
-    salary: 0,
-  });
 
   useEffect(() => {
     loadEmployees();
@@ -52,36 +42,28 @@ const Employees: React.FC = () => {
     setFilteredEmployees(filtered);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleSave = (employeeData: Employee) => {
     if (editingEmployee) {
       // Update existing employee
       const updatedEmployees = employees.map(emp =>
-        emp.id === editingEmployee.id ? { ...emp, ...formData } : emp
+        emp.id === editingEmployee.id ? employeeData : emp
       );
       setEmployees(updatedEmployees);
       setToStorage('employees', updatedEmployees);
-      setEditingEmployee(null);
     } else {
       // Add new employee
-      const newEmployee: Employee = {
-        id: Date.now().toString(),
-        ...formData as Omit<Employee, 'id'>,
-      };
-      const updatedEmployees = [...employees, newEmployee];
+      const updatedEmployees = [...employees, employeeData];
       setEmployees(updatedEmployees);
       setToStorage('employees', updatedEmployees);
     }
 
-    resetForm();
-    setShowAddModal(false);
+    setShowForm(false);
+    setEditingEmployee(null);
   };
 
   const handleEdit = (employee: Employee) => {
     setEditingEmployee(employee);
-    setFormData(employee);
-    setShowAddModal(true);
+    setShowForm(true);
   };
 
   const handleDelete = (id: string) => {
@@ -92,39 +74,80 @@ const Employees: React.FC = () => {
     }
   };
 
-  const resetForm = () => {
-    setFormData({
-      name: '',
-      email: '',
-      position: '',
-      department: '',
-      joinDate: '',
-      phone: '',
-      birthDate: '',
-      status: 'active',
-      salary: 0,
-    });
+  const handleAddNew = () => {
+    setEditingEmployee(null);
+    setShowForm(true);
   };
 
-  const departments = [...new Set(employees.map(emp => emp.department))];
+  const handleCancel = () => {
+    setShowForm(false);
+    setEditingEmployee(null);
+  };
+
+  const departments = Array.from(new Set(employees.map(emp => emp.department))).filter(Boolean);
+
+  // If showing form, render the TabbedEmployeeForm
+  if (showForm) {
+    return (
+      <div className="space-y-6">
+        <div className="flex justify-between items-center">
+          <h1 className="text-2xl font-semibold text-gray-900">
+            {editingEmployee ? 'Edit Karyawan' : 'Tambah Karyawan Baru'}
+          </h1>
+          <button
+            onClick={handleCancel}
+            className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
+          >
+            Kembali ke Daftar
+          </button>
+        </div>
+        
+        <TabbedEmployeeForm
+          employee={editingEmployee || undefined}
+          onSave={handleSave}
+          onCancel={handleCancel}
+        />
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-2xl font-semibold text-gray-900">Manajemen Karyawan</h1>
-          <p className="mt-1 text-sm text-gray-600">Kelola data karyawan perusahaan</p>
+          <p className="mt-1 text-sm text-gray-600">Kelola data karyawan perusahaan dengan sistem tabbed form yang komprehensif</p>
         </div>
         <button
-          onClick={() => {
-            resetForm();
-            setEditingEmployee(null);
-            setShowAddModal(true);
-          }}
+          onClick={handleAddNew}
           className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
         >
           Tambah Karyawan
         </button>
+      </div>
+
+      {/* Info Banner */}
+      <div className="bg-blue-50 border border-blue-200 rounded-md p-4">
+        <div className="flex">
+          <div className="flex-shrink-0">
+            <svg className="h-5 w-5 text-blue-400" viewBox="0 0 20 20" fill="currentColor">
+              <path fillRule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clipRule="evenodd" />
+            </svg>
+          </div>
+          <div className="ml-3">
+            <h3 className="text-sm font-medium text-blue-800">
+              Sistem Tabbed Form Karyawan
+            </h3>
+            <div className="mt-2 text-sm text-blue-700">
+              <ul className="list-disc pl-5 space-y-1">
+                <li>Tab 1: Informasi Utama - Data dasar karyawan</li>
+                <li>Tab 2: Detail Personal - Data personal, alamat, keluarga</li>
+                <li>Tab 3: Riwayat Pendidikan - Background pendidikan</li>
+                <li>Tab 4: Kompetensi & Skills - Skill dan sertifikasi</li>
+              </ul>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}
@@ -170,16 +193,30 @@ const Employees: React.FC = () => {
               <div className="flex items-center justify-between">
                 <div className="flex items-center">
                   <div className="flex-shrink-0 h-10 w-10">
-                    <div className="h-10 w-10 rounded-full bg-gray-300 flex items-center justify-center">
-                      <span className="text-sm font-medium text-gray-700">
-                        {employee.name.charAt(0).toUpperCase()}
-                      </span>
-                    </div>
+                    {employee.photoUrl ? (
+                      <img
+                        src={employee.photoUrl}
+                        alt="Employee"
+                        className="h-10 w-10 rounded-full object-cover"
+                      />
+                    ) : (
+                      <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center">
+                        <span className="text-sm font-medium text-white">
+                          {employee.name ? employee.name.charAt(0).toUpperCase() : '?'}
+                        </span>
+                      </div>
+                    )}
                   </div>
                   <div className="ml-4">
                     <div className="text-sm font-medium text-gray-900">{employee.name}</div>
-                    <div className="text-sm text-gray-500">{employee.position} - {employee.department}</div>
+                    <div className="text-sm font-bold" style={{ color: '#8AB9F1' }}>
+                      {employee.position} - {employee.department}
+                    </div>
+                    {employee.nip && <div className="text-sm text-gray-500">NIK: {employee.nip}</div>}
                     <div className="text-sm text-gray-500">{employee.email}</div>
+                    {employee.phone && <div className="text-sm text-gray-500">
+                      {employee.phone.replace(/(\d{4})(\d{4})(\d{4})/, '$1 $2 $3')}
+                    </div>}
                   </div>
                 </div>
                 <div className="flex items-center space-x-2">
@@ -214,128 +251,29 @@ const Employees: React.FC = () => {
         )}
       </div>
 
-      {/* Add/Edit Modal */}
-      {showAddModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-3/4 lg:w-1/2 shadow-lg rounded-md bg-white">
-            <div className="mt-3">
-              <h3 className="text-lg font-medium text-gray-900 mb-4">
-                {editingEmployee ? 'Edit Karyawan' : 'Tambah Karyawan Baru'}
-              </h3>
-              <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Nama</label>
-                    <input
-                      type="text"
-                      required
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Email</label>
-                    <input
-                      type="email"
-                      required
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      value={formData.email}
-                      onChange={(e) => setFormData({...formData, email: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Posisi</label>
-                    <input
-                      type="text"
-                      required
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      value={formData.position}
-                      onChange={(e) => setFormData({...formData, position: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Departemen</label>
-                    <input
-                      type="text"
-                      required
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      value={formData.department}
-                      onChange={(e) => setFormData({...formData, department: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Tanggal Bergabung</label>
-                    <input
-                      type="date"
-                      required
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      value={formData.joinDate}
-                      onChange={(e) => setFormData({...formData, joinDate: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Telepon</label>
-                    <input
-                      type="tel"
-                      required
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      value={formData.phone}
-                      onChange={(e) => setFormData({...formData, phone: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Tanggal Lahir</label>
-                    <input
-                      type="date"
-                      required
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      value={formData.birthDate}
-                      onChange={(e) => setFormData({...formData, birthDate: e.target.value})}
-                    />
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Gaji</label>
-                    <input
-                      type="number"
-                      required
-                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                      value={formData.salary}
-                      onChange={(e) => setFormData({...formData, salary: parseInt(e.target.value) || 0})}
-                    />
-                  </div>
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700">Status</label>
-                  <select
-                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
-                    value={formData.status}
-                    onChange={(e) => setFormData({...formData, status: e.target.value as 'active' | 'inactive'})}
-                  >
-                    <option value="active">Aktif</option>
-                    <option value="inactive">Tidak Aktif</option>
-                  </select>
-                </div>
-                <div className="flex justify-end space-x-3 pt-4">
-                  <button
-                    type="button"
-                    onClick={() => setShowAddModal(false)}
-                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-500 focus:ring-offset-2"
-                  >
-                    Batal
-                  </button>
-                  <button
-                    type="submit"
-                    className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-                  >
-                    {editingEmployee ? 'Update' : 'Simpan'}
-                  </button>
-                </div>
-              </form>
-            </div>
-          </div>
+      {/* Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white p-4 rounded-lg shadow">
+          <div className="text-2xl font-bold text-blue-600">{employees.length}</div>
+          <div className="text-sm text-gray-500">Total Karyawan</div>
         </div>
-      )}
+        <div className="bg-white p-4 rounded-lg shadow">
+          <div className="text-2xl font-bold text-green-600">
+            {employees.filter(emp => emp.status === 'active').length}
+          </div>
+          <div className="text-sm text-gray-500">Karyawan Aktif</div>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow">
+          <div className="text-2xl font-bold text-red-600">
+            {employees.filter(emp => emp.status === 'inactive').length}
+          </div>
+          <div className="text-sm text-gray-500">Karyawan Non-Aktif</div>
+        </div>
+        <div className="bg-white p-4 rounded-lg shadow">
+          <div className="text-2xl font-bold text-purple-600">{departments.length}</div>
+          <div className="text-sm text-gray-500">Total Departemen</div>
+        </div>
+      </div>
     </div>
   );
 };
