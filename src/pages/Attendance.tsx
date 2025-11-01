@@ -1716,55 +1716,576 @@ const SettingsConfigComponent = () => {
       checkInReminder: true,
       checkOutReminder: true,
       lateAlert: true
+    },
+    companyInfo: {
+      name: '',
+      address: '',
+      phone: '',
+      email: '',
+      website: '',
+      taxId: '',
+      logo: null as string | null
+    },
+    branding: {
+      primaryColor: '#3B82F6',
+      secondaryColor: '#6B7280',
+      accentColor: '#10B981'
     }
   });
+
+  const [activeTab, setActiveTab] = useState('working-hours');
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file && (file.type === 'image/png' || file.type === 'image/jpeg')) {
+      setLogoFile(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setLogoPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    } else {
+      alert('Format file harus PNG atau JPEG');
+    }
+  };
+
+  const handleSaveCompanyInfo = () => {
+    const updatedCompanyInfo = {
+      ...settings.companyInfo,
+      logo: logoPreview || settings.companyInfo.logo
+    };
+    
+    setSettings({
+      ...settings,
+      companyInfo: updatedCompanyInfo
+    });
+
+    // Save to localStorage
+    setToStorage('companySettings', updatedCompanyInfo);
+    
+    alert('Informasi perusahaan berhasil disimpan!');
+  };
+
+  const handleSaveBranding = () => {
+    setToStorage('brandingSettings', settings.branding);
+    alert('Pengaturan branding berhasil disimpan!');
+  };
+
+  const handleSaveWorkingHours = () => {
+    setToStorage('workingHoursSettings', settings);
+    alert('Pengaturan jam kerja berhasil disimpan!');
+  };
+
+  // Load saved settings on component mount
+  useEffect(() => {
+    const savedCompanyInfo = getFromStorage('companySettings');
+    const savedBranding = getFromStorage('brandingSettings');
+    
+    if (savedCompanyInfo) {
+      setSettings(prev => ({ ...prev, companyInfo: savedCompanyInfo }));
+      setLogoPreview(savedCompanyInfo.logo);
+    }
+    
+    if (savedBranding) {
+      setSettings(prev => ({ ...prev, branding: savedBranding }));
+    }
+  }, []);
+
+  const tabs = [
+    { id: 'working-hours', name: '⏰ Jam Kerja', icon: '⏰' },
+    { id: 'company-info', name: '🏢 Info Perusahaan', icon: '🏢' },
+    { id: 'branding', name: '🎨 Branding', icon: '🎨' },
+    { id: 'notifications', name: '🔔 Notifikasi', icon: '🔔' },
+    { id: 'geo-location', name: '📍 Geo-location', icon: '📍' }
+  ];
 
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold text-gray-900">⚙️ Pengaturan & Konfigurasi</h2>
-        <p className="mt-1 text-sm text-gray-600">Konfigurasi sistem absensi</p>
+        <p className="mt-1 text-sm text-gray-600">Konfigurasi sistem absensi dan identitas perusahaan</p>
       </div>
 
-      {/* Working Hours */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">⏰ Jam Kerja</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Jam Kerja per Hari</label>
-            <input
-              type="number"
-              className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              value={settings.workingHours}
-              onChange={(e) => setSettings({...settings, workingHours: Number(e.target.value)})}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Toleransi Keterlambatan (menit)</label>
-            <input
-              type="number"
-              className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              value={settings.lateTolerance}
-              onChange={(e) => setSettings({...settings, lateTolerance: Number(e.target.value)})}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Break Time (menit)</label>
-            <input
-              type="number"
-              className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              value={settings.breakTime}
-              onChange={(e) => setSettings({...settings, breakTime: Number(e.target.value)})}
-            />
-          </div>
-        </div>
+      {/* Tab Navigation */}
+      <div className="border-b border-gray-200">
+        <nav className="-mb-px flex space-x-8">
+          {tabs.map((tab) => (
+            <button
+              key={tab.id}
+              onClick={() => setActiveTab(tab.id)}
+              className={`${
+                activeTab === tab.id
+                  ? 'border-blue-500 text-blue-600'
+                  : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+              } whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm flex items-center space-x-2`}
+            >
+              <span>{tab.icon}</span>
+              <span>{tab.name}</span>
+            </button>
+          ))}
+        </nav>
       </div>
 
-      {/* Save Button */}
-      <div className="flex justify-end">
-        <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-          💾 Simpan Pengaturan
-        </button>
+      {/* Tab Content */}
+      <div className="mt-6">
+        {activeTab === 'working-hours' && (
+          <div className="bg-white shadow rounded-lg p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">⏰ Jam Kerja & Toleransi</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Jam Kerja per Hari</label>
+                <input
+                  type="number"
+                  className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  value={settings.workingHours}
+                  onChange={(e) => setSettings({...settings, workingHours: Number(e.target.value)})}
+                  placeholder="8"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Toleransi Keterlambatan (menit)</label>
+                <input
+                  type="number"
+                  className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  value={settings.lateTolerance}
+                  onChange={(e) => setSettings({...settings, lateTolerance: Number(e.target.value)})}
+                  placeholder="15"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Break Time (menit)</label>
+                <input
+                  type="number"
+                  className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  value={settings.breakTime}
+                  onChange={(e) => setSettings({...settings, breakTime: Number(e.target.value)})}
+                  placeholder="60"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Overtime Multiplier</label>
+                <input
+                  type="number"
+                  step="0.1"
+                  className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  value={settings.overtimeMultiplier}
+                  onChange={(e) => setSettings({...settings, overtimeMultiplier: Number(e.target.value)})}
+                  placeholder="1.5"
+                />
+              </div>
+            </div>
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={handleSaveWorkingHours}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                💾 Simpan Pengaturan
+              </button>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'company-info' && (
+          <div className="bg-white shadow rounded-lg p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">🏢 Informasi Perusahaan</h3>
+            
+            {/* Logo Upload */}
+            <div className="mb-6">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Logo Perusahaan</label>
+              <div className="flex items-center space-x-6">
+                <div>
+                  <input
+                    type="file"
+                    accept=".png,.jpg,.jpeg"
+                    onChange={handleLogoUpload}
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                  />
+                  <p className="text-xs text-gray-500 mt-1">Format yang didukung: PNG, JPG, JPEG (maks. 2MB)</p>
+                </div>
+                {logoPreview && (
+                  <div className="flex flex-col items-center">
+                    <img
+                      src={logoPreview}
+                      alt="Logo Preview"
+                      className="w-20 h-20 object-contain border border-gray-300 rounded-lg"
+                    />
+                    <button
+                      onClick={() => {
+                        setLogoPreview(null);
+                        setLogoFile(null);
+                      }}
+                      className="text-xs text-red-600 mt-1 hover:text-red-800"
+                    >
+                      Hapus
+                    </button>
+                  </div>
+                )}
+                {settings.companyInfo.logo && !logoPreview && (
+                  <div className="flex flex-col items-center">
+                    <img
+                      src={settings.companyInfo.logo}
+                      alt="Current Logo"
+                      className="w-20 h-20 object-contain border border-gray-300 rounded-lg"
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Logo Saat Ini</p>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Company Information Form */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Nama Perusahaan</label>
+                <input
+                  type="text"
+                  className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  value={settings.companyInfo.name}
+                  onChange={(e) => setSettings({
+                    ...settings,
+                    companyInfo: { ...settings.companyInfo, name: e.target.value }
+                  })}
+                  placeholder="PT. Contoh Perusahaan"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                <input
+                  type="email"
+                  className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  value={settings.companyInfo.email}
+                  onChange={(e) => setSettings({
+                    ...settings,
+                    companyInfo: { ...settings.companyInfo, email: e.target.value }
+                  })}
+                  placeholder="info@contohperusahaan.com"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Nomor Telepon</label>
+                <input
+                  type="tel"
+                  className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  value={settings.companyInfo.phone}
+                  onChange={(e) => setSettings({
+                    ...settings,
+                    companyInfo: { ...settings.companyInfo, phone: e.target.value }
+                  })}
+                  placeholder="+62 21 1234 5678"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Website</label>
+                <input
+                  type="url"
+                  className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  value={settings.companyInfo.website}
+                  onChange={(e) => setSettings({
+                    ...settings,
+                    companyInfo: { ...settings.companyInfo, website: e.target.value }
+                  })}
+                  placeholder="https://www.contohperusahaan.com"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">NPWP</label>
+                <input
+                  type="text"
+                  className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  value={settings.companyInfo.taxId}
+                  onChange={(e) => setSettings({
+                    ...settings,
+                    companyInfo: { ...settings.companyInfo, taxId: e.target.value }
+                  })}
+                  placeholder="00.000.000.0-000.000"
+                />
+              </div>
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Alamat Perusahaan</label>
+                <textarea
+                  rows={3}
+                  className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  value={settings.companyInfo.address}
+                  onChange={(e) => setSettings({
+                    ...settings,
+                    companyInfo: { ...settings.companyInfo, address: e.target.value }
+                  })}
+                  placeholder="Jl. Contoh No. 123, Jakarta Pusat, DKI Jakarta 12345"
+                />
+              </div>
+            </div>
+            
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={handleSaveCompanyInfo}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                💾 Simpan Info Perusahaan
+              </button>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'branding' && (
+          <div className="bg-white shadow rounded-lg p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">🎨 Branding & Tema</h3>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Warna Primer</label>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="color"
+                    value={settings.branding.primaryColor}
+                    onChange={(e) => setSettings({
+                      ...settings,
+                      branding: { ...settings.branding, primaryColor: e.target.value }
+                    })}
+                    className="w-12 h-10 border border-gray-300 rounded cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={settings.branding.primaryColor}
+                    onChange={(e) => setSettings({
+                      ...settings,
+                      branding: { ...settings.branding, primaryColor: e.target.value }
+                    })}
+                    className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="#3B82F6"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Warna Sekunder</label>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="color"
+                    value={settings.branding.secondaryColor}
+                    onChange={(e) => setSettings({
+                      ...settings,
+                      branding: { ...settings.branding, secondaryColor: e.target.value }
+                    })}
+                    className="w-12 h-10 border border-gray-300 rounded cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={settings.branding.secondaryColor}
+                    onChange={(e) => setSettings({
+                      ...settings,
+                      branding: { ...settings.branding, secondaryColor: e.target.value }
+                    })}
+                    className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="#6B7280"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Warna Aksen</label>
+                <div className="flex items-center space-x-2">
+                  <input
+                    type="color"
+                    value={settings.branding.accentColor}
+                    onChange={(e) => setSettings({
+                      ...settings,
+                      branding: { ...settings.branding, accentColor: e.target.value }
+                    })}
+                    className="w-12 h-10 border border-gray-300 rounded cursor-pointer"
+                  />
+                  <input
+                    type="text"
+                    value={settings.branding.accentColor}
+                    onChange={(e) => setSettings({
+                      ...settings,
+                      branding: { ...settings.branding, accentColor: e.target.value }
+                    })}
+                    className="flex-1 border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    placeholder="#10B981"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Preview Colors */}
+            <div className="mt-6">
+              <h4 className="text-md font-medium text-gray-800 mb-3">Preview Warna</h4>
+              <div className="flex space-x-4">
+                <div className="flex-1 p-4 rounded-lg" style={{ backgroundColor: settings.branding.primaryColor }}>
+                  <span className="text-white font-medium">Warna Primer</span>
+                </div>
+                <div className="flex-1 p-4 rounded-lg" style={{ backgroundColor: settings.branding.secondaryColor }}>
+                  <span className="text-white font-medium">Warna Sekunder</span>
+                </div>
+                <div className="flex-1 p-4 rounded-lg" style={{ backgroundColor: settings.branding.accentColor }}>
+                  <span className="text-white font-medium">Warna Aksen</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="mt-6 flex justify-end">
+              <button
+                onClick={handleSaveBranding}
+                className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+              >
+                💾 Simpan Branding
+              </button>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'notifications' && (
+          <div className="bg-white shadow rounded-lg p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">🔔 Pengaturan Notifikasi</h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900">Reminder Check-in</h4>
+                  <p className="text-sm text-gray-500">Kirim notifikasi untuk remind check-in</p>
+                </div>
+                <button
+                  onClick={() => setSettings({
+                    ...settings,
+                    notifications: { ...settings.notifications, checkInReminder: !settings.notifications.checkInReminder }
+                  })}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${
+                    settings.notifications.checkInReminder ? 'bg-blue-600' : 'bg-gray-200'
+                  }`}
+                >
+                  <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    settings.notifications.checkInReminder ? 'translate-x-5' : 'translate-x-0'
+                  }`} />
+                </button>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900">Reminder Check-out</h4>
+                  <p className="text-sm text-gray-500">Kirim notifikasi untuk remind check-out</p>
+                </div>
+                <button
+                  onClick={() => setSettings({
+                    ...settings,
+                    notifications: { ...settings.notifications, checkOutReminder: !settings.notifications.checkOutReminder }
+                  })}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${
+                    settings.notifications.checkOutReminder ? 'bg-blue-600' : 'bg-gray-200'
+                  }`}
+                >
+                  <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    settings.notifications.checkOutReminder ? 'translate-x-5' : 'translate-x-0'
+                  }`} />
+                </button>
+              </div>
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900">Alert Keterlambatan</h4>
+                  <p className="text-sm text-gray-500">Kirim notifikasi ketika ada karyawan terlambat</p>
+                </div>
+                <button
+                  onClick={() => setSettings({
+                    ...settings,
+                    notifications: { ...settings.notifications, lateAlert: !settings.notifications.lateAlert }
+                  })}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${
+                    settings.notifications.lateAlert ? 'bg-blue-600' : 'bg-gray-200'
+                  }`}
+                >
+                  <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    settings.notifications.lateAlert ? 'translate-x-5' : 'translate-x-0'
+                  }`} />
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'geo-location' && (
+          <div className="bg-white shadow rounded-lg p-6">
+            <h3 className="text-lg font-medium text-gray-900 mb-4">📍 Pengaturan Geo-location</h3>
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h4 className="text-sm font-medium text-gray-900">Enable Geo-fencing</h4>
+                  <p className="text-sm text-gray-500">Wajibkan absensi dari lokasi kantor</p>
+                </div>
+                <button
+                  onClick={() => setSettings({
+                    ...settings,
+                    geoFence: { ...settings.geoFence, enabled: !settings.geoFence.enabled }
+                  })}
+                  className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-blue-600 focus:ring-offset-2 ${
+                    settings.geoFence.enabled ? 'bg-blue-600' : 'bg-gray-200'
+                  }`}
+                >
+                  <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
+                    settings.geoFence.enabled ? 'translate-x-5' : 'translate-x-0'
+                  }`} />
+                </button>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Radius (meter)</label>
+                <input
+                  type="number"
+                  className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  value={settings.geoFence.radius}
+                  onChange={(e) => setSettings({
+                    ...settings,
+                    geoFence: { ...settings.geoFence, radius: Number(e.target.value) }
+                  })}
+                  placeholder="100"
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Latitude</label>
+                  <input
+                    type="number"
+                    step="any"
+                    className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    value={settings.geoFence.center.lat}
+                    onChange={(e) => setSettings({
+                      ...settings,
+                      geoFence: {
+                        ...settings.geoFence,
+                        center: { ...settings.geoFence.center, lat: Number(e.target.value) }
+                      }
+                    })}
+                    placeholder="-6.2088"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Longitude</label>
+                  <input
+                    type="number"
+                    step="any"
+                    className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    value={settings.geoFence.center.lng}
+                    onChange={(e) => setSettings({
+                      ...settings,
+                      geoFence: {
+                        ...settings.geoFence,
+                        center: { ...settings.geoFence.center, lng: Number(e.target.value) }
+                      }
+                    })}
+                    placeholder="106.8456"
+                  />
+                </div>
+              </div>
+              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                <div className="flex">
+                  <div className="flex-shrink-0">
+                    <span className="text-blue-600 text-xl">ℹ️</span>
+                  </div>
+                  <div className="ml-3">
+                    <h3 className="text-sm font-medium text-blue-800">Info Geo-fencing</h3>
+                    <div className="mt-2 text-sm text-blue-700">
+                      <p>Geo-fencing memungkinkan sistem untuk memverifikasi lokasi absensi karyawan. Karyawan hanya bisa melakukan check-in/check-out dari dalam radius yang ditentukan.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
