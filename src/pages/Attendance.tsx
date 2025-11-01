@@ -146,7 +146,7 @@ const AttendancePage: React.FC = () => {
                 disabled={!selectedEmployee}
                 className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 disabled:bg-gray-300 disabled:cursor-not-allowed"
               >
-                Check-in
+                Masuk
               </button>
             )}
 
@@ -155,7 +155,7 @@ const AttendancePage: React.FC = () => {
                 onClick={handleCheckOut}
                 className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
               >
-                Check-out
+                Keluar
               </button>
             )}
 
@@ -163,7 +163,7 @@ const AttendancePage: React.FC = () => {
               onClick={requestNotificationPermission}
               className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 text-sm"
             >
-              Enable Notifications
+              Aktifkan Notifikasi
             </button>
           </div>
         </div>

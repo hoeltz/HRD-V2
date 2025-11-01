@@ -68,7 +68,7 @@ const Employees: React.FC = () => {
   };
 
   const handleDelete = (id: string) => {
-    if (window.confirm('Are you sure you want to delete this employee?')) {
+    if (window.confirm('Apakah Anda yakin ingin menghapus karyawan ini?')) {
       const updatedEmployees = employees.filter(emp => emp.id !== id);
       setEmployees(updatedEmployees);
       setToStorage('employees', updatedEmployees);
@@ -247,7 +247,7 @@ const Employees: React.FC = () => {
         </ul>
         {filteredEmployees.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-gray-500">Tidak ada karyawan ditemukan</p>
+            <p className="text-gray-500">Tidak ada karyawan yang ditemukan</p>
           </div>
         )}
       </div>

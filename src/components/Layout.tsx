@@ -84,7 +84,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <div className="flex items-center">
                 <div className="ml-3">
                   <p className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
-                    Logout
+                    Keluar
                   </p>
                 </div>
               </div>
@@ -124,7 +124,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               <div className="flex items-center">
                 <div className="ml-3">
                   <p className="text-sm font-medium text-black group-hover:text-black/80">
-                    Logout
+                    Keluar
                   </p>
                 </div>
               </div>

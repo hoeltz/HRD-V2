@@ -62,7 +62,7 @@ const Dashboard: React.FC = () => {
     labels: Object.keys(departmentData),
     datasets: [
       {
-        label: 'Employees by Department',
+        label: 'Karyawan per Departemen',
         data: Object.values(departmentData),
         backgroundColor: 'rgba(59, 130, 246, 0.5)',
         borderColor: 'rgba(59, 130, 246, 1)',
@@ -79,7 +79,7 @@ const Dashboard: React.FC = () => {
       },
       title: {
         display: true,
-        text: 'Employee Distribution by Department',
+        text: 'Distribusi Karyawan per Departemen',
       },
     },
   };
@@ -88,7 +88,7 @@ const Dashboard: React.FC = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-semibold text-gray-900">Dashboard</h1>
-        <p className="mt-1 text-sm text-gray-600">Welcome to My-Office</p>
+        <p className="mt-1 text-sm text-gray-600">Selamat datang di My-Office</p>
       </div>
 
       {/* Statistics Cards */}
@@ -105,7 +105,7 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Total Employees</dt>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Total Karyawan</dt>
                   <dd className="text-lg font-medium text-gray-900">{stats.totalEmployees}</dd>
                 </dl>
               </div>
@@ -125,7 +125,7 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Active Employees</dt>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Karyawan Aktif</dt>
                   <dd className="text-lg font-medium text-gray-900">{stats.activeEmployees}</dd>
                 </dl>
               </div>
@@ -145,7 +145,7 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Today's Attendance</dt>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Absensi Hari Ini</dt>
                   <dd className="text-lg font-medium text-gray-900">{stats.todayAttendance}</dd>
                 </dl>
               </div>
@@ -165,7 +165,7 @@ const Dashboard: React.FC = () => {
               </div>
               <div className="ml-5 w-0 flex-1">
                 <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Salary Records</dt>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Rekomendasi Gaji</dt>
                   <dd className="text-lg font-medium text-gray-900">{stats.pendingSalaries}</dd>
                 </dl>
               </div>
@@ -176,7 +176,7 @@ const Dashboard: React.FC = () => {
 
       {/* Chart */}
       <div className="bg-white shadow rounded-lg p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Employee Distribution</h3>
+        <h3 className="text-lg font-medium text-gray-900 mb-4">Distribusi Karyawan</h3>
         <div className="h-64">
           <Bar data={chartData} options={chartOptions} />
         </div>
@@ -185,7 +185,7 @@ const Dashboard: React.FC = () => {
       {/* Recent Activity */}
       <div className="bg-white shadow rounded-lg">
         <div className="px-4 py-5 sm:p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">Recent Activity</h3>
+          <h3 className="text-lg font-medium text-gray-900 mb-4">Aktivitas Terbaru</h3>
           <div className="space-y-3">
             {attendance.slice(-5).reverse().map((att: Attendance) => {
               const employee = employees.find(emp => emp.id === att.employeeId);
@@ -200,7 +200,7 @@ const Dashboard: React.FC = () => {
                   </div>
                   <div className="flex-1 min-w-0">
                     <p className="text-sm font-medium text-gray-900">
-                      {employee?.name} checked in at {att.checkIn}
+                      {employee?.name} masuk kerja pada {att.checkIn}
                     </p>
                     <p className="text-sm text-gray-500">{att.date}</p>
                   </div>
@@ -208,7 +208,7 @@ const Dashboard: React.FC = () => {
               );
             })}
             {attendance.length === 0 && (
-              <p className="text-sm text-gray-500">No recent attendance records</p>
+              <p className="text-sm text-gray-500">Tidak ada catatan absensi terbaru</p>
             )}
           </div>
         </div>
