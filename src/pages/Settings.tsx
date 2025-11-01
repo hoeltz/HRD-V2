@@ -176,8 +176,34 @@ const Settings: React.FC = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900">Pengaturan</h1>
-        <p className="mt-1 text-sm text-gray-600">Kelola profil dan pengaturan aplikasi</p>
+        <h1 className="text-2xl font-semibold text-gray-900">⚙️ Pengaturan</h1>
+        <p className="mt-1 text-sm text-gray-600">Kelola profil, branding, dan pengaturan aplikasi</p>
+      </div>
+
+      {/* Quick Action Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="bg-gradient-to-r from-blue-50 to-blue-100 border border-blue-200 rounded-lg p-4">
+          <div className="flex items-center space-x-3">
+            <div className="flex-shrink-0">
+              <span className="text-2xl">🎨</span>
+            </div>
+            <div>
+              <h3 className="text-lg font-medium text-blue-900">Branding Aplikasi</h3>
+              <p className="text-sm text-blue-700">Upload logo dan ubah nama aplikasi</p>
+            </div>
+          </div>
+        </div>
+        <div className="bg-gradient-to-r from-green-50 to-green-100 border border-green-200 rounded-lg p-4">
+          <div className="flex items-center space-x-3">
+            <div className="flex-shrink-0">
+              <span className="text-2xl">🏢</span>
+            </div>
+            <div>
+              <h3 className="text-lg font-medium text-green-900">Identitas Perusahaan</h3>
+              <p className="text-sm text-green-700">Atur informasi dan branding perusahaan</p>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* App Branding Settings */}
