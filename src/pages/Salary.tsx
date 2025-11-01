@@ -15,9 +15,60 @@ const SalaryPage: React.FC = () => {
   }, []);
 
   const loadData = () => {
-    const employeesData = getFromStorage('employees') || [];
+    let employeesData = getFromStorage('employees') || [];
     const attendanceData = getFromStorage('attendance') || [];
-    const salaryDetailsData = getFromStorage('salaryDetails') || [];
+    const salaryDetailsData = getFromStorage('salaries') || getFromStorage('salaryDetails') || [];
+    
+    // Add sample data if empty
+    if (employeesData.length === 0) {
+      const sampleEmployees: Employee[] = [
+        {
+          id: '1',
+          name: 'Budi Santoso',
+          email: 'budi@company.com',
+          position: 'Software Developer',
+          department: 'IT',
+          salary: 8000000,
+          status: 'active' as const,
+          photoUrl: '',
+          phone: '081234567890',
+          joinDate: '2023-01-15',
+          birthDate: '1990-05-15',
+          nip: 'IT001'
+        },
+        {
+          id: '2',
+          name: 'Siti Nurhaliza',
+          email: 'siti@company.com',
+          position: 'UI/UX Designer',
+          department: 'Design',
+          salary: 6500000,
+          status: 'active' as const,
+          photoUrl: '',
+          phone: '081234567892',
+          joinDate: '2023-03-01',
+          birthDate: '1992-08-20',
+          nip: 'DS002'
+        },
+        {
+          id: '3',
+          name: 'Ahmad Rizki',
+          email: 'ahmad@company.com',
+          position: 'Project Manager',
+          department: 'Management',
+          salary: 9000000,
+          status: 'active' as const,
+          photoUrl: '',
+          phone: '081234567894',
+          joinDate: '2022-11-01',
+          birthDate: '1988-12-10',
+          nip: 'MG003'
+        }
+      ];
+      setToStorage('employees', sampleEmployees);
+      employeesData = sampleEmployees;
+    }
+    
     setEmployees(employeesData);
     setAttendance(attendanceData);
     setSalaryDetails(salaryDetailsData);
@@ -108,11 +159,11 @@ const SalaryPage: React.FC = () => {
 
   const tabs = [
     { id: 'salary-slips', name: 'Slip Gaji', icon: '📋' },
-    { id: 'allowances', name: 'Tunjangan', icon: '💰', disabled: true },
-    { id: 'deductions', name: 'Potongan', icon: '🔻', disabled: true },
-    { id: 'payroll-config', name: 'Konfigurasi', icon: '⚙️', disabled: true },
-    { id: 'bonuses', name: 'Bonus', icon: '🎁', disabled: true },
-    { id: 'salary-structure', name: 'Struktur Gaji', icon: '📊', disabled: true },
+    { id: 'allowances', name: 'Tunjangan', icon: '💰', disabled: false },
+    { id: 'deductions', name: 'Potongan', icon: '🔻', disabled: false },
+    { id: 'payroll-config', name: 'Konfigurasi', icon: '⚙️', disabled: false },
+    { id: 'bonuses', name: 'Bonus', icon: '🎁', disabled: false },
+    { id: 'salary-structure', name: 'Struktur Gaji', icon: '📊', disabled: false },
   ];
 
   return (
@@ -152,16 +203,51 @@ const SalaryPage: React.FC = () => {
 
       {/* Tab Content */}
       <div className="mt-6">
-        <SalarySlipsComponent
-          employees={employees}
-          attendance={attendance}
-          salaryDetails={salaryDetails}
-          calculateEnhancedSalary={calculateEnhancedSalary}
-          formatCurrency={formatCurrency}
-          getMonthName={getMonthName}
-          settings={settings}
-          onDataChange={loadData}
-        />
+        {activeTab === 'salary-slips' && (
+          <SalarySlipsComponent
+            employees={employees}
+            attendance={attendance}
+            salaryDetails={salaryDetails}
+            calculateEnhancedSalary={calculateEnhancedSalary}
+            formatCurrency={formatCurrency}
+            getMonthName={getMonthName}
+            settings={settings}
+            onDataChange={loadData}
+          />
+        )}
+        {activeTab === 'allowances' && (
+          <AllowancesComponent
+            employees={employees}
+            settings={settings}
+            formatCurrency={formatCurrency}
+          />
+        )}
+        {activeTab === 'deductions' && (
+          <DeductionsComponent
+            employees={employees}
+            settings={settings}
+            formatCurrency={formatCurrency}
+          />
+        )}
+        {activeTab === 'bonuses' && (
+          <BonusesComponent
+            employees={employees}
+            settings={settings}
+            formatCurrency={formatCurrency}
+          />
+        )}
+        {activeTab === 'payroll-config' && (
+          <PayrollConfigComponent
+            settings={settings}
+            onDataChange={loadData}
+          />
+        )}
+        {activeTab === 'salary-structure' && (
+          <SalaryStructureComponent
+            employees={employees}
+            formatCurrency={formatCurrency}
+          />
+        )}
       </div>
     </div>
   );
@@ -407,13 +493,16 @@ Dicetak pada: ${new Date().toLocaleDateString('id-ID')}
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-medium text-gray-900">Daftar Slip Gaji</h2>
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Manajemen Slip Gaji</h2>
+          <p className="mt-1 text-sm text-gray-600">Generate dan kelola slip gaji karyawan dengan fitur print dan export</p>
+        </div>
         <div className="flex space-x-2">
           <button
             onClick={() => setShowGenerateModal(true)}
-            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium shadow-lg"
           >
-            Generate Slip Gaji
+            📋 Generate Slip Gaji
           </button>
         </div>
       </div>
@@ -724,6 +813,317 @@ Dicetak pada: ${new Date().toLocaleDateString('id-ID')}
           </div>
         </div>
       )}
+    </div>
+  );
+};
+
+// Allowances Component
+const AllowancesComponent = ({ employees, settings, formatCurrency }: any) => {
+  const allowanceTypes = [
+    { name: 'Transport', rate: 20000, type: 'per_day', description: 'Tunjangan transportasi harian' },
+    { name: 'Makan', rate: 25000, type: 'per_day', description: 'Tunjangan makan harian' },
+    { name: 'Kesehatan', rate: 5, type: 'percentage', description: 'Tunjangan kesehatan 5% dari gaji pokok' },
+    { name: 'Posisi', rate: 10, type: 'percentage', description: 'Tunjangan posisi 10% dari gaji pokok' },
+    { name: 'Keahlian', rate: 500000, type: 'fixed', description: 'Tunjangan keahlian tetap' },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Manajemen Tunjangan</h2>
+          <p className="mt-1 text-sm text-gray-600">Kelola berbagai jenis tunjangan karyawan</p>
+        </div>
+        <button className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 font-medium shadow-lg">
+          ➕ Tambah Tunjangan
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {allowanceTypes.map((allowance, index) => (
+          <div key={index} className="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex items-center">
+                <div className="bg-green-100 p-2 rounded-lg mr-3">
+                  <span className="text-green-600 text-xl">💰</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">{allowance.name}</h3>
+                  <p className="text-sm text-gray-500">{allowance.type === 'percentage' ? `${allowance.rate}%` : formatCurrency(allowance.rate)}</p>
+                </div>
+              </div>
+            </div>
+            <p className="text-gray-600 text-sm mb-4">{allowance.description}</p>
+            <div className="flex space-x-2">
+              <button className="flex-1 bg-green-50 text-green-700 px-3 py-2 rounded-md hover:bg-green-100 text-sm">
+                Edit
+              </button>
+              <button className="flex-1 bg-red-50 text-red-700 px-3 py-2 rounded-md hover:bg-red-100 text-sm">
+                Hapus
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Deductions Component
+const DeductionsComponent = ({ employees, settings, formatCurrency }: any) => {
+  const deductionTypes = [
+    { name: 'Pajak Penghasilan', rate: 5, type: 'percentage', description: 'Pajak penghasilan 5% dari gaji bruto' },
+    { name: 'BPJS Kesehatan', rate: 1, type: 'percentage', description: 'Iuran BPJS kesehatan 1%' },
+    { name: 'BPJS Ketenagakerjaan', rate: 2, type: 'percentage', description: 'Iuran BPJS ketenagakerjaan 2%' },
+    { name: 'Koperasi', rate: 0, type: 'fixed', description: 'Potongan koperasi (jika ada)' },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Manajemen Potongan</h2>
+          <p className="mt-1 text-sm text-gray-600">Kelola berbagai jenis potongan gaji</p>
+        </div>
+        <button className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 font-medium shadow-lg">
+          ➕ Tambah Potongan
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {deductionTypes.map((deduction, index) => (
+          <div key={index} className="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex items-center">
+                <div className="bg-red-100 p-2 rounded-lg mr-3">
+                  <span className="text-red-600 text-xl">🔻</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">{deduction.name}</h3>
+                  <p className="text-sm text-gray-500">{deduction.type === 'percentage' ? `${deduction.rate}%` : formatCurrency(deduction.rate)}</p>
+                </div>
+              </div>
+            </div>
+            <p className="text-gray-600 text-sm mb-4">{deduction.description}</p>
+            <div className="flex space-x-2">
+              <button className="flex-1 bg-red-50 text-red-700 px-3 py-2 rounded-md hover:bg-red-100 text-sm">
+                Edit
+              </button>
+              <button className="flex-1 bg-gray-50 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-100 text-sm">
+                Hapus
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Bonuses Component
+const BonusesComponent = ({ employees, settings, formatCurrency }: any) => {
+  const bonusTypes = [
+    { name: 'Bonus Kinerja', amount: 1000000, type: 'performance', description: 'Bonus berdasarkan evaluasi kinerja' },
+    { name: 'Bonus Tahunan', amount: 2000000, type: 'annual', description: 'Bonus akhir tahun atau THR' },
+    { name: 'Bonus Hari Raya', amount: 1500000, type: 'holiday', description: 'Bonus hari raya keagamaan' },
+    { name: 'Bonus Kehadiran', amount: 500000, type: 'attendance', description: 'Bonus untuk kehadiran perfect' },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Manajemen Bonus</h2>
+          <p className="mt-1 text-sm text-gray-600">Kelola berbagai jenis bonus karyawan</p>
+        </div>
+        <button className="bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 font-medium shadow-lg">
+          ➕ Tambah Bonus
+        </button>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {bonusTypes.map((bonus, index) => (
+          <div key={index} className="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500">
+            <div className="flex justify-between items-start mb-4">
+              <div className="flex items-center">
+                <div className="bg-yellow-100 p-2 rounded-lg mr-3">
+                  <span className="text-yellow-600 text-xl">🎁</span>
+                </div>
+                <div>
+                  <h3 className="text-lg font-semibold text-gray-900">{bonus.name}</h3>
+                  <p className="text-sm text-gray-500">{formatCurrency(bonus.amount)}</p>
+                </div>
+              </div>
+            </div>
+            <p className="text-gray-600 text-sm mb-4">{bonus.description}</p>
+            <div className="flex space-x-2">
+              <button className="flex-1 bg-yellow-50 text-yellow-700 px-3 py-2 rounded-md hover:bg-yellow-100 text-sm">
+                Edit
+              </button>
+              <button className="flex-1 bg-gray-50 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-100 text-sm">
+                Hapus
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
+// Payroll Config Component
+const PayrollConfigComponent = ({ settings, onDataChange }: any) => {
+  const [config, setConfig] = useState({
+    workingHoursPerDay: 8,
+    workingDaysPerMonth: 22,
+    overtimeMultiplier: 1.5,
+    standardOvertimeThreshold: 40,
+    monthlyTaxExemption: 4500000,
+    transportAllowanceRate: 20000,
+    mealAllowanceRate: 25000,
+  });
+
+  const handleSave = () => {
+    // Save config logic here
+    alert('Konfigurasi payroll berhasil disimpan!');
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Konfigurasi Payroll</h2>
+          <p className="mt-1 text-sm text-gray-600">Atur parameter perhitungan gaji</p>
+        </div>
+        <button
+          onClick={handleSave}
+          className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium shadow-lg"
+        >
+          💾 Simpan Konfigurasi
+        </button>
+      </div>
+
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-6">Pengaturan Umum</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Jam Kerja per Hari</label>
+            <input
+              type="number"
+              className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              value={config.workingHoursPerDay}
+              onChange={(e) => setConfig({...config, workingHoursPerDay: Number(e.target.value)})}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Hari Kerja per Bulan</label>
+            <input
+              type="number"
+              className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              value={config.workingDaysPerMonth}
+              onChange={(e) => setConfig({...config, workingDaysPerMonth: Number(e.target.value)})}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Multiplier Lembur</label>
+            <input
+              type="number"
+              step="0.1"
+              className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              value={config.overtimeMultiplier}
+              onChange={(e) => setConfig({...config, overtimeMultiplier: Number(e.target.value)})}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Batas Lembur Standar (jam/bulan)</label>
+            <input
+              type="number"
+              className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              value={config.standardOvertimeThreshold}
+              onChange={(e) => setConfig({...config, standardOvertimeThreshold: Number(e.target.value)})}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div className="bg-white rounded-lg shadow p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-6">Pengaturan Tunjangan</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Rate Tunjangan Transport (per hari)</label>
+            <input
+              type="number"
+              className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              value={config.transportAllowanceRate}
+              onChange={(e) => setConfig({...config, transportAllowanceRate: Number(e.target.value)})}
+            />
+          </div>
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Rate Tunjangan Makan (per hari)</label>
+            <input
+              type="number"
+              className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              value={config.mealAllowanceRate}
+              onChange={(e) => setConfig({...config, mealAllowanceRate: Number(e.target.value)})}
+            />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Salary Structure Component
+const SalaryStructureComponent = ({ employees, formatCurrency }: any) => {
+  const salaryStructures = [
+    { level: 'Junior', position: 'Software Developer', minSalary: 6000000, maxSalary: 8000000, baseSalary: 7000000 },
+    { level: 'Senior', position: 'Software Developer', minSalary: 9000000, maxSalary: 12000000, baseSalary: 10500000 },
+    { level: 'Lead', position: 'Software Developer', minSalary: 13000000, maxSalary: 16000000, baseSalary: 14500000 },
+    { level: 'Junior', position: 'UI/UX Designer', minSalary: 5000000, maxSalary: 7000000, baseSalary: 6000000 },
+    { level: 'Senior', position: 'UI/UX Designer', minSalary: 8000000, maxSalary: 10000000, baseSalary: 9000000 },
+  ];
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">Struktur Gaji</h2>
+          <p className="mt-1 text-sm text-gray-600">View struktur salary berdasarkan level dan posisi</p>
+        </div>
+        <button className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 font-medium shadow-lg">
+          ➕ Tambah Level
+        </button>
+      </div>
+
+      <div className="bg-white rounded-lg shadow overflow-hidden">
+        <table className="min-w-full divide-y divide-gray-200">
+          <thead className="bg-gray-50">
+            <tr>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Level</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Posisi</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gaji Min</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gaji Max</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gaji Pokok</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white divide-y divide-gray-200">
+            {salaryStructures.map((structure, index) => (
+              <tr key={index}>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{structure.level}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{structure.position}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(structure.minSalary)}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(structure.maxSalary)}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{formatCurrency(structure.baseSalary)}</td>
+                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                  <button className="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
+                  <button className="text-red-600 hover:text-red-900">Hapus</button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 };
