@@ -740,7 +740,7 @@ const Skills: React.FC = () => {
                   onChange={(e) => setTrainingFilters({...trainingFilters, type: e.target.value})}
                   className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="">All Types</option>
+                  <option value="">Semua Jenis</option>
                   <option value="internal">Internal</option>
                   <option value="external">External</option>
                   <option value="online">Online</option>
@@ -883,7 +883,7 @@ const Skills: React.FC = () => {
                   onChange={(e) => setCertificationFilters({...certificationFilters, type: e.target.value})}
                   className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="">All Types</option>
+                  <option value="">Semua Jenis</option>
                   <option value="professional">Professional</option>
                   <option value="technical">Technical</option>
                   <option value="language">Language</option>

@@ -561,7 +561,7 @@ const Performance: React.FC = () => {
                 >
                   <option value="">All Status</option>
                   <option value="not-started">Not Started</option>
-                  <option value="in-progress">In Progress</option>
+                  <option value="in-progress">Dalam Progress</option>
                   <option value="completed">Completed</option>
                   <option value="on-hold">On Hold</option>
                   <option value="cancelled">Cancelled</option>
