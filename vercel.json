@@ -1,6 +1,11 @@
 {
   "version": 2,
   "name": "my-office-hrd-management",
+  "buildCommand": "npm run build",
+  "outputDirectory": "build",
+  "framework": "create-react-app",
+  "installCommand": "npm install",
+  "devCommand": "npm start",
   "builds": [
     {
       "src": "package.json",

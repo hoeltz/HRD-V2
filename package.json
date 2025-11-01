@@ -34,12 +34,12 @@
   "scripts": {
     "start": "react-scripts start",
     "build": "react-scripts build",
-    "vercel-build": "npm ci && npm run build",
+    "vercel-build": "npm ci && npm run build && echo '🚀 Vercel build triggered'",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
     "clean": "rm -rf node_modules package-lock.json build",
     "reinstall": "npm run clean && npm install --legacy-peer-deps",
-    "predeploy": "npm run build",
+    "predeploy": "npm run build && echo '✅ Predeploy build completed'",
     "verify-build": "npm ci && npm run build && echo '✅ Build verification successful'"
   },
   "eslintConfig": {
