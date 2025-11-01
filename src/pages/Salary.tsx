@@ -200,7 +200,7 @@ const SalarySlipsComponent = ({
 
     const totalAllowances = (Object.values(calculation.allowances) as number[]).reduce((a, b) => a + b, 0);
     const totalDeductions = (Object.values(calculation.deductions) as number[]).reduce((a, b) => a + b, 0);
-    const totalBonuses = (Object.values(calculation.bonuses) as number[]).reduce((a, b) => a + b, 0);
+    // const totalBonuses = (Object.values(calculation.bonuses) as number[]).reduce((a, b) => a + b, 0);
 
     const newSalaryDetail: Salary = {
       id: Date.now().toString(),

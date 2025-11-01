@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { getAppSettings, AppSettings, updateAppSettings } from '../utils/storage';
 
 export const useAppSettings = () => {
