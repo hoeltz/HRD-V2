@@ -63,7 +63,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                   <img
                     src={settings.logoData}
                     alt="App Logo"
-                    className="h-16 w-16 mx-auto mb-2 rounded-lg shadow-sm object-cover"
+                    className="max-h-16 max-w-32 mx-auto mb-2 rounded-lg shadow-sm object-contain"
                   />
                 ) : (
                   <div className="h-16 w-16 mx-auto mb-2 bg-blue-600 rounded-lg flex items-center justify-center">
@@ -115,7 +115,7 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 <img
                   src={settings.logoData}
                   alt="App Logo"
-                  className="h-16 w-16 mx-auto mb-2 rounded-lg shadow-sm object-cover bg-white/20 p-1"
+                  className="max-h-16 max-w-32 mx-auto mb-2 rounded-lg shadow-sm object-contain bg-white/20 p-1"
                 />
               ) : (
                 <div className="h-16 w-16 mx-auto mb-2 bg-white rounded-lg flex items-center justify-center shadow-sm">
