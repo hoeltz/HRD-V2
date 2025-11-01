@@ -819,13 +819,85 @@ Dicetak pada: ${new Date().toLocaleDateString('id-ID')}
 
 // Allowances Component
 const AllowancesComponent = ({ employees, settings, formatCurrency }: any) => {
-  const allowanceTypes = [
-    { name: 'Transport', rate: 20000, type: 'per_day', description: 'Tunjangan transportasi harian' },
-    { name: 'Makan', rate: 25000, type: 'per_day', description: 'Tunjangan makan harian' },
-    { name: 'Kesehatan', rate: 5, type: 'percentage', description: 'Tunjangan kesehatan 5% dari gaji pokok' },
-    { name: 'Posisi', rate: 10, type: 'percentage', description: 'Tunjangan posisi 10% dari gaji pokok' },
-    { name: 'Keahlian', rate: 500000, type: 'fixed', description: 'Tunjangan keahlian tetap' },
-  ];
+  const [allowances, setAllowances] = useState([
+    { id: '1', name: 'Transport', rate: 20000, type: 'per_day', description: 'Tunjangan transportasi harian', active: true },
+    { id: '2', name: 'Makan', rate: 25000, type: 'per_day', description: 'Tunjangan makan harian', active: true },
+    { id: '3', name: 'Kesehatan', rate: 5, type: 'percentage', description: 'Tunjangan kesehatan 5% dari gaji pokok', active: true },
+    { id: '4', name: 'Posisi', rate: 10, type: 'percentage', description: 'Tunjangan posisi 10% dari gaji pokok', active: true },
+    { id: '5', name: 'Keahlian', rate: 500000, type: 'fixed', description: 'Tunjangan keahlian tetap', active: true },
+  ]);
+  const [showModal, setShowModal] = useState(false);
+  const [editingAllowance, setEditingAllowance] = useState<any>(null);
+  const [viewingAllowance, setViewingAllowance] = useState<any>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    rate: 0,
+    type: 'fixed',
+    description: '',
+    active: true
+  });
+
+  const handleAdd = () => {
+    setEditingAllowance(null);
+    setFormData({ name: '', rate: 0, type: 'fixed', description: '', active: true });
+    setShowModal(true);
+  };
+
+  const handleEdit = (allowance: any) => {
+    setEditingAllowance(allowance);
+    setFormData({
+      name: allowance.name,
+      rate: allowance.rate,
+      type: allowance.type,
+      description: allowance.description,
+      active: allowance.active
+    });
+    setShowModal(true);
+  };
+
+  const handleView = (allowance: any) => {
+    setViewingAllowance(allowance);
+  };
+
+  const handleDelete = (id: string) => {
+    if (window.confirm('Apakah Anda yakin ingin menghapus tunjangan ini?')) {
+      setAllowances(allowances.filter(a => a.id !== id));
+      alert('Tunjangan berhasil dihapus!');
+    }
+  };
+
+  const handleSave = () => {
+    if (!formData.name || formData.rate <= 0) {
+      alert('Mohon lengkapi semua field yang diperlukan!');
+      return;
+    }
+
+    if (editingAllowance) {
+      setAllowances(allowances.map(a =>
+        a.id === editingAllowance.id
+          ? { ...a, ...formData, id: a.id }
+          : a
+      ));
+      alert('Tunjangan berhasil diperbarui!');
+    } else {
+      const newAllowance = {
+        ...formData,
+        id: Date.now().toString()
+      };
+      setAllowances([...allowances, newAllowance]);
+      alert('Tunjangan berhasil ditambahkan!');
+    }
+    setShowModal(false);
+  };
+
+  const getTypeLabel = (type: string) => {
+    const types = {
+      'fixed': 'Tetap',
+      'percentage': 'Persentase',
+      'per_day': 'Per Hari'
+    };
+    return types[type as keyof typeof types] || type;
+  };
 
   return (
     <div className="space-y-6">
@@ -840,8 +912,8 @@ const AllowancesComponent = ({ employees, settings, formatCurrency }: any) => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {allowanceTypes.map((allowance, index) => (
-          <div key={index} className="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
+        {allowances.map((allowance: any) => (
+          <div key={allowance.id} className="bg-white rounded-lg shadow p-6 border-l-4 border-green-500">
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center">
                 <div className="bg-green-100 p-2 rounded-lg mr-3">
@@ -849,34 +921,266 @@ const AllowancesComponent = ({ employees, settings, formatCurrency }: any) => {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">{allowance.name}</h3>
-                  <p className="text-sm text-gray-500">{allowance.type === 'percentage' ? `${allowance.rate}%` : formatCurrency(allowance.rate)}</p>
+                  <p className="text-sm text-gray-500">
+                    {allowance.type === 'percentage' ? `${allowance.rate}%` : formatCurrency(allowance.rate)}
+                    {!allowance.active && <span className="ml-2 text-red-500">(Nonaktif)</span>}
+                  </p>
                 </div>
               </div>
             </div>
             <p className="text-gray-600 text-sm mb-4">{allowance.description}</p>
             <div className="flex space-x-2">
-              <button className="flex-1 bg-green-50 text-green-700 px-3 py-2 rounded-md hover:bg-green-100 text-sm">
+              <button
+                onClick={() => handleView(allowance)}
+                className="flex-1 bg-blue-50 text-blue-700 px-3 py-2 rounded-md hover:bg-blue-100 text-sm"
+              >
+                View
+              </button>
+              <button
+                onClick={() => handleEdit(allowance)}
+                className="flex-1 bg-green-50 text-green-700 px-3 py-2 rounded-md hover:bg-green-100 text-sm"
+              >
                 Edit
               </button>
-              <button className="flex-1 bg-red-50 text-red-700 px-3 py-2 rounded-md hover:bg-red-100 text-sm">
-                Hapus
+              <button
+                onClick={() => handleDelete(allowance.id)}
+                className="flex-1 bg-red-50 text-red-700 px-3 py-2 rounded-md hover:bg-red-100 text-sm"
+              >
+                Delete
               </button>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Add/Edit Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                {editingAllowance ? 'Edit Tunjangan' : 'Tambah Tunjangan Baru'}
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Nama Tunjangan</label>
+                  <input
+                    type="text"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    placeholder="Masukkan nama tunjangan"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Tipe Tunjangan</label>
+                  <select
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    value={formData.type}
+                    onChange={(e) => setFormData({...formData, type: e.target.value})}
+                  >
+                    <option value="fixed">Tetap</option>
+                    <option value="percentage">Persentase</option>
+                    <option value="per_day">Per Hari</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    {formData.type === 'percentage' ? 'Persentase (%)' : 'Jumlah (Rp)'}
+                  </label>
+                  <input
+                    type="number"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    value={formData.rate}
+                    onChange={(e) => setFormData({...formData, rate: Number(e.target.value)})}
+                    placeholder="Masukkan nilai"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Deskripsi</label>
+                  <textarea
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    rows={3}
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    placeholder="Masukkan deskripsi tunjangan"
+                  />
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="active"
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    checked={formData.active}
+                    onChange={(e) => setFormData({...formData, active: e.target.checked})}
+                  />
+                  <label htmlFor="active" className="ml-2 block text-sm text-gray-900">
+                    Tunjangan aktif
+                  </label>
+                </div>
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
+                  >
+                    {editingAllowance ? 'Update' : 'Tambah'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Detail Modal */}
+      {viewingAllowance && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Detail Tunjangan</h3>
+                <button
+                  onClick={() => setViewingAllowance(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Nama</label>
+                    <p className="mt-1 text-sm text-gray-900">{viewingAllowance.name}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Tipe</label>
+                    <p className="mt-1 text-sm text-gray-900">{getTypeLabel(viewingAllowance.type)}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Nilai</label>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {viewingAllowance.type === 'percentage'
+                        ? `${viewingAllowance.rate}%`
+                        : formatCurrency(viewingAllowance.rate)}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Status</label>
+                    <p className="mt-1 text-sm">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        viewingAllowance.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {viewingAllowance.active ? 'Aktif' : 'Nonaktif'}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Deskripsi</label>
+                  <p className="mt-1 text-sm text-gray-900">{viewingAllowance.description}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 // Deductions Component
 const DeductionsComponent = ({ employees, settings, formatCurrency }: any) => {
-  const deductionTypes = [
-    { name: 'Pajak Penghasilan', rate: 5, type: 'percentage', description: 'Pajak penghasilan 5% dari gaji bruto' },
-    { name: 'BPJS Kesehatan', rate: 1, type: 'percentage', description: 'Iuran BPJS kesehatan 1%' },
-    { name: 'BPJS Ketenagakerjaan', rate: 2, type: 'percentage', description: 'Iuran BPJS ketenagakerjaan 2%' },
-    { name: 'Koperasi', rate: 0, type: 'fixed', description: 'Potongan koperasi (jika ada)' },
-  ];
+  const [deductions, setDeductions] = useState([
+    { id: '1', name: 'Pajak Penghasilan', rate: 5, type: 'percentage', description: 'Pajak penghasilan 5% dari gaji bruto', active: true, mandatory: true },
+    { id: '2', name: 'BPJS Kesehatan', rate: 1, type: 'percentage', description: 'Iuran BPJS kesehatan 1%', active: true, mandatory: true },
+    { id: '3', name: 'BPJS Ketenagakerjaan', rate: 2, type: 'percentage', description: 'Iuran BPJS ketenagakerjaan 2%', active: true, mandatory: true },
+    { id: '4', name: 'Koperasi', rate: 0, type: 'fixed', description: 'Potongan koperasi (jika ada)', active: false, mandatory: false },
+  ]);
+  const [showModal, setShowModal] = useState(false);
+  const [editingDeduction, setEditingDeduction] = useState<any>(null);
+  const [viewingDeduction, setViewingDeduction] = useState<any>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    rate: 0,
+    type: 'percentage',
+    description: '',
+    active: true,
+    mandatory: false
+  });
+
+  const handleAdd = () => {
+    setEditingDeduction(null);
+    setFormData({ name: '', rate: 0, type: 'percentage', description: '', active: true, mandatory: false });
+    setShowModal(true);
+  };
+
+  const handleEdit = (deduction: any) => {
+    setEditingDeduction(deduction);
+    setFormData({
+      name: deduction.name,
+      rate: deduction.rate,
+      type: deduction.type,
+      description: deduction.description,
+      active: deduction.active,
+      mandatory: deduction.mandatory
+    });
+    setShowModal(true);
+  };
+
+  const handleView = (deduction: any) => {
+    setViewingDeduction(deduction);
+  };
+
+  const handleDelete = (id: string) => {
+    const deduction = deductions.find(d => d.id === id);
+    if (deduction?.mandatory) {
+      alert('Potongan wajib tidak dapat dihapus!');
+      return;
+    }
+    if (window.confirm('Apakah Anda yakin ingin menghapus potongan ini?')) {
+      setDeductions(deductions.filter(d => d.id !== id));
+      alert('Potongan berhasil dihapus!');
+    }
+  };
+
+  const handleSave = () => {
+    if (!formData.name || formData.rate < 0) {
+      alert('Mohon lengkapi semua field yang diperlukan!');
+      return;
+    }
+
+    if (editingDeduction) {
+      setDeductions(deductions.map(d =>
+        d.id === editingDeduction.id
+          ? { ...d, ...formData, id: d.id }
+          : d
+      ));
+      alert('Potongan berhasil diperbarui!');
+    } else {
+      const newDeduction = {
+        ...formData,
+        id: Date.now().toString()
+      };
+      setDeductions([...deductions, newDeduction]);
+      alert('Potongan berhasil ditambahkan!');
+    }
+    setShowModal(false);
+  };
+
+  const getTypeLabel = (type: string) => {
+    const types = {
+      'fixed': 'Tetap',
+      'percentage': 'Persentase'
+    };
+    return types[type as keyof typeof types] || type;
+  };
 
   return (
     <div className="space-y-6">
@@ -885,14 +1189,17 @@ const DeductionsComponent = ({ employees, settings, formatCurrency }: any) => {
           <h2 className="text-2xl font-bold text-gray-900">Manajemen Potongan</h2>
           <p className="mt-1 text-sm text-gray-600">Kelola berbagai jenis potongan gaji</p>
         </div>
-        <button className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 font-medium shadow-lg">
+        <button
+          onClick={handleAdd}
+          className="bg-red-600 text-white px-6 py-3 rounded-lg hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2 font-medium shadow-lg"
+        >
           ➕ Tambah Potongan
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {deductionTypes.map((deduction, index) => (
-          <div key={index} className="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
+        {deductions.map((deduction: any) => (
+          <div key={deduction.id} className="bg-white rounded-lg shadow p-6 border-l-4 border-red-500">
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center">
                 <div className="bg-red-100 p-2 rounded-lg mr-3">
@@ -900,34 +1207,296 @@ const DeductionsComponent = ({ employees, settings, formatCurrency }: any) => {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">{deduction.name}</h3>
-                  <p className="text-sm text-gray-500">{deduction.type === 'percentage' ? `${deduction.rate}%` : formatCurrency(deduction.rate)}</p>
+                  <p className="text-sm text-gray-500">
+                    {deduction.type === 'percentage' ? `${deduction.rate}%` : formatCurrency(deduction.rate)}
+                    {deduction.mandatory && <span className="ml-2 text-red-500">(Wajib)</span>}
+                    {!deduction.active && <span className="ml-2 text-gray-500">(Nonaktif)</span>}
+                  </p>
                 </div>
               </div>
             </div>
             <p className="text-gray-600 text-sm mb-4">{deduction.description}</p>
             <div className="flex space-x-2">
-              <button className="flex-1 bg-red-50 text-red-700 px-3 py-2 rounded-md hover:bg-red-100 text-sm">
+              <button
+                onClick={() => handleView(deduction)}
+                className="flex-1 bg-blue-50 text-blue-700 px-3 py-2 rounded-md hover:bg-blue-100 text-sm"
+              >
+                View
+              </button>
+              <button
+                onClick={() => handleEdit(deduction)}
+                className="flex-1 bg-yellow-50 text-yellow-700 px-3 py-2 rounded-md hover:bg-yellow-100 text-sm"
+              >
                 Edit
               </button>
-              <button className="flex-1 bg-gray-50 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-100 text-sm">
-                Hapus
+              <button
+                onClick={() => handleDelete(deduction.id)}
+                disabled={deduction.mandatory}
+                className="flex-1 bg-gray-50 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-100 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Delete
               </button>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Add/Edit Modal - Similar structure as AllowancesComponent */}
+      {showModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                {editingDeduction ? 'Edit Potongan' : 'Tambah Potongan Baru'}
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Nama Potongan</label>
+                  <input
+                    type="text"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    placeholder="Masukkan nama potongan"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Tipe Potongan</label>
+                  <select
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    value={formData.type}
+                    onChange={(e) => setFormData({...formData, type: e.target.value})}
+                  >
+                    <option value="percentage">Persentase</option>
+                    <option value="fixed">Tetap</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">
+                    {formData.type === 'percentage' ? 'Persentase (%)' : 'Jumlah (Rp)'}
+                  </label>
+                  <input
+                    type="number"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    value={formData.rate}
+                    onChange={(e) => setFormData({...formData, rate: Number(e.target.value)})}
+                    placeholder="Masukkan nilai"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Deskripsi</label>
+                  <textarea
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    rows={3}
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    placeholder="Masukkan deskripsi potongan"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="active"
+                      className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                      checked={formData.active}
+                      onChange={(e) => setFormData({...formData, active: e.target.checked})}
+                    />
+                    <label htmlFor="active" className="ml-2 block text-sm text-gray-900">
+                      Potongan aktif
+                    </label>
+                  </div>
+                  <div className="flex items-center">
+                    <input
+                      type="checkbox"
+                      id="mandatory"
+                      className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+                      checked={formData.mandatory}
+                      onChange={(e) => setFormData({...formData, mandatory: e.target.checked})}
+                    />
+                    <label htmlFor="mandatory" className="ml-2 block text-sm text-gray-900">
+                      Potongan wajib (tidak dapat dihapus)
+                    </label>
+                  </div>
+                </div>
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700"
+                  >
+                    {editingDeduction ? 'Update' : 'Tambah'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Detail Modal - Similar structure as AllowancesComponent */}
+      {viewingDeduction && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Detail Potongan</h3>
+                <button
+                  onClick={() => setViewingDeduction(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Nama</label>
+                    <p className="mt-1 text-sm text-gray-900">{viewingDeduction.name}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Tipe</label>
+                    <p className="mt-1 text-sm text-gray-900">{getTypeLabel(viewingDeduction.type)}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Nilai</label>
+                    <p className="mt-1 text-sm text-gray-900">
+                      {viewingDeduction.type === 'percentage'
+                        ? `${viewingDeduction.rate}%`
+                        : formatCurrency(viewingDeduction.rate)}
+                    </p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Status</label>
+                    <p className="mt-1 text-sm">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        viewingDeduction.active ? 'bg-green-100 text-green-800' : 'bg-gray-100 text-gray-800'
+                      }`}>
+                        {viewingDeduction.active ? 'Aktif' : 'Nonaktif'}
+                      </span>
+                      {viewingDeduction.mandatory && (
+                        <span className="ml-2 inline-flex px-2 py-1 text-xs font-semibold rounded-full bg-red-100 text-red-800">
+                          Wajib
+                        </span>
+                      )}
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Deskripsi</label>
+                  <p className="mt-1 text-sm text-gray-900">{viewingDeduction.description}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 // Bonuses Component
 const BonusesComponent = ({ employees, settings, formatCurrency }: any) => {
-  const bonusTypes = [
-    { name: 'Bonus Kinerja', amount: 1000000, type: 'performance', description: 'Bonus berdasarkan evaluasi kinerja' },
-    { name: 'Bonus Tahunan', amount: 2000000, type: 'annual', description: 'Bonus akhir tahun atau THR' },
-    { name: 'Bonus Hari Raya', amount: 1500000, type: 'holiday', description: 'Bonus hari raya keagamaan' },
-    { name: 'Bonus Kehadiran', amount: 500000, type: 'attendance', description: 'Bonus untuk kehadiran perfect' },
-  ];
+  const [bonuses, setBonuses] = useState([
+    { id: '1', name: 'Bonus Kinerja', amount: 1000000, type: 'performance', description: 'Bonus berdasarkan evaluasi kinerja', frequency: 'monthly', active: true, criteria: 'Rating ≥ 4.0' },
+    { id: '2', name: 'Bonus Tahunan', amount: 2000000, type: 'annual', description: 'Bonus akhir tahun atau THR', frequency: 'annual', active: true, criteria: '1 tahun masa kerja' },
+    { id: '3', name: 'Bonus Hari Raya', amount: 1500000, type: 'holiday', description: 'Bonus hari raya keagamaan', frequency: 'on-demand', active: true, criteria: 'Hari raya keagamaan' },
+    { id: '4', name: 'Bonus Kehadiran', amount: 500000, type: 'attendance', description: 'Bonus untuk kehadiran perfect', frequency: 'monthly', active: true, criteria: '100% kehadiran' },
+  ]);
+  const [showModal, setShowModal] = useState(false);
+  const [editingBonus, setEditingBonus] = useState<any>(null);
+  const [viewingBonus, setViewingBonus] = useState<any>(null);
+  const [formData, setFormData] = useState({
+    name: '',
+    amount: 0,
+    type: 'performance',
+    description: '',
+    frequency: 'monthly',
+    criteria: '',
+    active: true
+  });
+
+  const handleAdd = () => {
+    setEditingBonus(null);
+    setFormData({ name: '', amount: 0, type: 'performance', description: '', frequency: 'monthly', criteria: '', active: true });
+    setShowModal(true);
+  };
+
+  const handleEdit = (bonus: any) => {
+    setEditingBonus(bonus);
+    setFormData({
+      name: bonus.name,
+      amount: bonus.amount,
+      type: bonus.type,
+      description: bonus.description,
+      frequency: bonus.frequency,
+      criteria: bonus.criteria,
+      active: bonus.active
+    });
+    setShowModal(true);
+  };
+
+  const handleView = (bonus: any) => {
+    setViewingBonus(bonus);
+  };
+
+  const handleDelete = (id: string) => {
+    if (window.confirm('Apakah Anda yakin ingin menghapus bonus ini?')) {
+      setBonuses(bonuses.filter(b => b.id !== id));
+      alert('Bonus berhasil dihapus!');
+    }
+  };
+
+  const handleSave = () => {
+    if (!formData.name || formData.amount <= 0) {
+      alert('Mohon lengkapi semua field yang diperlukan!');
+      return;
+    }
+
+    if (editingBonus) {
+      setBonuses(bonuses.map(b =>
+        b.id === editingBonus.id
+          ? { ...b, ...formData, id: b.id }
+          : b
+      ));
+      alert('Bonus berhasil diperbarui!');
+    } else {
+      const newBonus = {
+        ...formData,
+        id: Date.now().toString()
+      };
+      setBonuses([...bonuses, newBonus]);
+      alert('Bonus berhasil ditambahkan!');
+    }
+    setShowModal(false);
+  };
+
+  const getTypeLabel = (type: string) => {
+    const types = {
+      'performance': 'Kinerja',
+      'annual': 'Tahunan',
+      'holiday': 'Hari Raya',
+      'attendance': 'Kehadiran',
+      'other': 'Lainnya'
+    };
+    return types[type as keyof typeof types] || type;
+  };
+
+  const getFrequencyLabel = (frequency: string) => {
+    const frequencies = {
+      'monthly': 'Bulanan',
+      'quarterly': 'Per 3 Bulan',
+      'annual': 'Tahunan',
+      'on-demand': 'Sesuai Kebutuhan'
+    };
+    return frequencies[frequency as keyof typeof frequencies] || frequency;
+  };
 
   return (
     <div className="space-y-6">
@@ -936,14 +1505,17 @@ const BonusesComponent = ({ employees, settings, formatCurrency }: any) => {
           <h2 className="text-2xl font-bold text-gray-900">Manajemen Bonus</h2>
           <p className="mt-1 text-sm text-gray-600">Kelola berbagai jenis bonus karyawan</p>
         </div>
-        <button className="bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 font-medium shadow-lg">
+        <button
+          onClick={handleAdd}
+          className="bg-yellow-600 text-white px-6 py-3 rounded-lg hover:bg-yellow-700 focus:outline-none focus:ring-2 focus:ring-yellow-500 focus:ring-offset-2 font-medium shadow-lg"
+        >
           ➕ Tambah Bonus
         </button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {bonusTypes.map((bonus, index) => (
-          <div key={index} className="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500">
+        {bonuses.map((bonus: any) => (
+          <div key={bonus.id} className="bg-white rounded-lg shadow p-6 border-l-4 border-yellow-500">
             <div className="flex justify-between items-start mb-4">
               <div className="flex items-center">
                 <div className="bg-yellow-100 p-2 rounded-lg mr-3">
@@ -951,28 +1523,215 @@ const BonusesComponent = ({ employees, settings, formatCurrency }: any) => {
                 </div>
                 <div>
                   <h3 className="text-lg font-semibold text-gray-900">{bonus.name}</h3>
-                  <p className="text-sm text-gray-500">{formatCurrency(bonus.amount)}</p>
+                  <p className="text-sm text-gray-500">
+                    {formatCurrency(bonus.amount)} - {getFrequencyLabel(bonus.frequency)}
+                    {!bonus.active && <span className="ml-2 text-red-500">(Nonaktif)</span>}
+                  </p>
                 </div>
               </div>
             </div>
-            <p className="text-gray-600 text-sm mb-4">{bonus.description}</p>
+            <p className="text-gray-600 text-sm mb-2">{bonus.description}</p>
+            <p className="text-xs text-gray-500 mb-4">
+              <strong>Kriteria:</strong> {bonus.criteria}
+            </p>
             <div className="flex space-x-2">
-              <button className="flex-1 bg-yellow-50 text-yellow-700 px-3 py-2 rounded-md hover:bg-yellow-100 text-sm">
+              <button
+                onClick={() => handleView(bonus)}
+                className="flex-1 bg-blue-50 text-blue-700 px-3 py-2 rounded-md hover:bg-blue-100 text-sm"
+              >
+                View
+              </button>
+              <button
+                onClick={() => handleEdit(bonus)}
+                className="flex-1 bg-yellow-50 text-yellow-700 px-3 py-2 rounded-md hover:bg-yellow-100 text-sm"
+              >
                 Edit
               </button>
-              <button className="flex-1 bg-gray-50 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-100 text-sm">
-                Hapus
+              <button
+                onClick={() => handleDelete(bonus.id)}
+                className="flex-1 bg-red-50 text-red-700 px-3 py-2 rounded-md hover:bg-red-100 text-sm"
+              >
+                Delete
               </button>
             </div>
           </div>
         ))}
       </div>
+
+      {/* Add/Edit Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                {editingBonus ? 'Edit Bonus' : 'Tambah Bonus Baru'}
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Nama Bonus</label>
+                  <input
+                    type="text"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    placeholder="Masukkan nama bonus"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Tipe Bonus</label>
+                  <select
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    value={formData.type}
+                    onChange={(e) => setFormData({...formData, type: e.target.value})}
+                  >
+                    <option value="performance">Kinerja</option>
+                    <option value="annual">Tahunan</option>
+                    <option value="holiday">Hari Raya</option>
+                    <option value="attendance">Kehadiran</option>
+                    <option value="other">Lainnya</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Jumlah Bonus (Rp)</label>
+                  <input
+                    type="number"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    value={formData.amount}
+                    onChange={(e) => setFormData({...formData, amount: Number(e.target.value)})}
+                    placeholder="Masukkan jumlah bonus"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Frekuensi</label>
+                  <select
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    value={formData.frequency}
+                    onChange={(e) => setFormData({...formData, frequency: e.target.value})}
+                  >
+                    <option value="monthly">Bulanan</option>
+                    <option value="quarterly">Per 3 Bulan</option>
+                    <option value="annual">Tahunan</option>
+                    <option value="on-demand">Sesuai Kebutuhan</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Kriteria</label>
+                  <input
+                    type="text"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    value={formData.criteria}
+                    onChange={(e) => setFormData({...formData, criteria: e.target.value})}
+                    placeholder="Masukkan criteria bonus"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Deskripsi</label>
+                  <textarea
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    rows={3}
+                    value={formData.description}
+                    onChange={(e) => setFormData({...formData, description: e.target.value})}
+                    placeholder="Masukkan deskripsi bonus"
+                  />
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="active"
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    checked={formData.active}
+                    onChange={(e) => setFormData({...formData, active: e.target.checked})}
+                  />
+                  <label htmlFor="active" className="ml-2 block text-sm text-gray-900">
+                    Bonus aktif
+                  </label>
+                </div>
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    className="bg-yellow-600 text-white px-4 py-2 rounded-md hover:bg-yellow-700"
+                  >
+                    {editingBonus ? 'Update' : 'Tambah'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Detail Modal */}
+      {viewingBonus && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Detail Bonus</h3>
+                <button
+                  onClick={() => setViewingBonus(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="space-y-4">
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Nama</label>
+                    <p className="mt-1 text-sm text-gray-900">{viewingBonus.name}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Tipe</label>
+                    <p className="mt-1 text-sm text-gray-900">{getTypeLabel(viewingBonus.type)}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Jumlah</label>
+                    <p className="mt-1 text-sm text-gray-900">{formatCurrency(viewingBonus.amount)}</p>
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Frekuensi</label>
+                    <p className="mt-1 text-sm text-gray-900">{getFrequencyLabel(viewingBonus.frequency)}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-gray-700">Kriteria</label>
+                    <p className="mt-1 text-sm text-gray-900">{viewingBonus.criteria}</p>
+                  </div>
+                  <div className="col-span-2">
+                    <label className="block text-sm font-medium text-gray-700">Status</label>
+                    <p className="mt-1 text-sm">
+                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                        viewingBonus.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                      }`}>
+                        {viewingBonus.active ? 'Aktif' : 'Nonaktif'}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Deskripsi</label>
+                  <p className="mt-1 text-sm text-gray-900">{viewingBonus.description}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 // Payroll Config Component
 const PayrollConfigComponent = ({ settings, onDataChange }: any) => {
+  const [showModal, setShowModal] = useState(false);
+  const [viewingConfig, setViewingConfig] = useState(false);
+  const [selectedConfig, setSelectedConfig] = useState<any>(null);
   const [config, setConfig] = useState({
     workingHoursPerDay: 8,
     workingDaysPerMonth: 22,
@@ -982,6 +1741,45 @@ const PayrollConfigComponent = ({ settings, onDataChange }: any) => {
     transportAllowanceRate: 20000,
     mealAllowanceRate: 25000,
   });
+
+  const [savedConfigs, setSavedConfigs] = useState([
+    {
+      id: '1',
+      name: 'Konfigurasi Default',
+      workingHoursPerDay: 8,
+      workingDaysPerMonth: 22,
+      overtimeMultiplier: 1.5,
+      standardOvertimeThreshold: 40,
+      monthlyTaxExemption: 4500000,
+      transportAllowanceRate: 20000,
+      mealAllowanceRate: 25000,
+      createdAt: '2024-01-01',
+      active: true
+    }
+  ]);
+
+  const handleView = (configItem: any) => {
+    setSelectedConfig(configItem);
+    setViewingConfig(true);
+  };
+
+  const handleEdit = (configItem: any) => {
+    setSelectedConfig(configItem);
+    setConfig({...configItem});
+    setShowModal(true);
+  };
+
+  const handleDelete = (id: string) => {
+    const configItem = savedConfigs.find(c => c.id === id);
+    if (configItem?.active) {
+      alert('Konfigurasi aktif tidak dapat dihapus!');
+      return;
+    }
+    if (window.confirm('Apakah Anda yakin ingin menghapus konfigurasi ini?')) {
+      setSavedConfigs(savedConfigs.filter(c => c.id !== id));
+      alert('Konfigurasi berhasil dihapus!');
+    }
+  };
 
   const handleSave = () => {
     // Save config logic here
@@ -995,102 +1793,291 @@ const PayrollConfigComponent = ({ settings, onDataChange }: any) => {
           <h2 className="text-2xl font-bold text-gray-900">Konfigurasi Payroll</h2>
           <p className="mt-1 text-sm text-gray-600">Atur parameter perhitungan gaji</p>
         </div>
-        <button
-          onClick={handleSave}
-          className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium shadow-lg"
-        >
-          💾 Simpan Konfigurasi
-        </button>
-      </div>
-
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6">Pengaturan Umum</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Jam Kerja per Hari</label>
-            <input
-              type="number"
-              className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              value={config.workingHoursPerDay}
-              onChange={(e) => setConfig({...config, workingHoursPerDay: Number(e.target.value)})}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Hari Kerja per Bulan</label>
-            <input
-              type="number"
-              className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              value={config.workingDaysPerMonth}
-              onChange={(e) => setConfig({...config, workingDaysPerMonth: Number(e.target.value)})}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Multiplier Lembur</label>
-            <input
-              type="number"
-              step="0.1"
-              className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              value={config.overtimeMultiplier}
-              onChange={(e) => setConfig({...config, overtimeMultiplier: Number(e.target.value)})}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Batas Lembur Standar (jam/bulan)</label>
-            <input
-              type="number"
-              className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              value={config.standardOvertimeThreshold}
-              onChange={(e) => setConfig({...config, standardOvertimeThreshold: Number(e.target.value)})}
-            />
-          </div>
+        <div className="space-x-3">
+          <button
+            onClick={() => setSelectedConfig(null)}
+            className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 font-medium shadow-lg"
+          >
+            ➕ Tambah Konfigurasi
+          </button>
+          <button
+            onClick={() => setShowModal(true)}
+            className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium shadow-lg"
+          >
+            💾 Simpan Konfigurasi
+          </button>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-6">Pengaturan Tunjangan</h3>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Rate Tunjangan Transport (per hari)</label>
-            <input
-              type="number"
-              className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              value={config.transportAllowanceRate}
-              onChange={(e) => setConfig({...config, transportAllowanceRate: Number(e.target.value)})}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Rate Tunjangan Makan (per hari)</label>
-            <input
-              type="number"
-              className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              value={config.mealAllowanceRate}
-              onChange={(e) => setConfig({...config, mealAllowanceRate: Number(e.target.value)})}
-            />
-          </div>
+      {/* Saved Configurations List */}
+      <div className="bg-white rounded-lg shadow">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">Konfigurasi Tersimpan</h3>
+        </div>
+        <div className="divide-y divide-gray-200">
+          {savedConfigs.map((configItem: any) => (
+            <div key={configItem.id} className="p-6">
+              <div className="flex justify-between items-center">
+                <div>
+                  <h4 className="text-md font-medium text-gray-900">{configItem.name}</h4>
+                  <p className="text-sm text-gray-500">
+                    Dibuat: {configItem.createdAt} |
+                    {configItem.active && <span className="ml-2 text-green-600 font-medium">Aktif</span>}
+                    {!configItem.active && <span className="ml-2 text-gray-500">Nonaktif</span>}
+                  </p>
+                </div>
+                <div className="flex space-x-2">
+                  <button
+                    onClick={() => handleView(configItem)}
+                    className="bg-blue-50 text-blue-700 px-4 py-2 rounded-md hover:bg-blue-100 text-sm"
+                  >
+                    View
+                  </button>
+                  <button
+                    onClick={() => handleEdit(configItem)}
+                    className="bg-yellow-50 text-yellow-700 px-4 py-2 rounded-md hover:bg-yellow-100 text-sm"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(configItem.id)}
+                    disabled={configItem.active}
+                    className="bg-red-50 text-red-700 px-4 py-2 rounded-md hover:bg-red-100 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    Delete
+                  </button>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
+
+      {/* Add/Edit Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-2/3 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                {selectedConfig ? 'Edit Konfigurasi' : 'Tambah Konfigurasi Baru'}
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Jam Kerja per Hari</label>
+                  <input
+                    type="number"
+                    className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    value={config.workingHoursPerDay}
+                    onChange={(e) => setConfig({...config, workingHoursPerDay: Number(e.target.value)})}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Hari Kerja per Bulan</label>
+                  <input
+                    type="number"
+                    className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    value={config.workingDaysPerMonth}
+                    onChange={(e) => setConfig({...config, workingDaysPerMonth: Number(e.target.value)})}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Multiplier Lembur</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    value={config.overtimeMultiplier}
+                    onChange={(e) => setConfig({...config, overtimeMultiplier: Number(e.target.value)})}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Batas Lembur Standar (jam/bulan)</label>
+                  <input
+                    type="number"
+                    className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    value={config.standardOvertimeThreshold}
+                    onChange={(e) => setConfig({...config, standardOvertimeThreshold: Number(e.target.value)})}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Rate Tunjangan Transport (per hari)</label>
+                  <input
+                    type="number"
+                    className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    value={config.transportAllowanceRate}
+                    onChange={(e) => setConfig({...config, transportAllowanceRate: Number(e.target.value)})}
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Rate Tunjangan Makan (per hari)</label>
+                  <input
+                    type="number"
+                    className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    value={config.mealAllowanceRate}
+                    onChange={(e) => setConfig({...config, mealAllowanceRate: Number(e.target.value)})}
+                  />
+                </div>
+              </div>
+              <div className="flex justify-end space-x-3 pt-6">
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+                >
+                  Batal
+                </button>
+                <button
+                  onClick={handleSave}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+                >
+                  {selectedConfig ? 'Update' : 'Simpan'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Detail Modal */}
+      {viewingConfig && selectedConfig && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Detail Konfigurasi</h3>
+                <button
+                  onClick={() => setViewingConfig(false)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Jam Kerja/Hari</label>
+                  <p className="mt-1 text-sm text-gray-900">{selectedConfig.workingHoursPerDay} jam</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Hari Kerja/Bulan</label>
+                  <p className="mt-1 text-sm text-gray-900">{selectedConfig.workingDaysPerMonth} hari</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Multiplier Lembur</label>
+                  <p className="mt-1 text-sm text-gray-900">{selectedConfig.overtimeMultiplier}x</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Batas Lembur</label>
+                  <p className="mt-1 text-sm text-gray-900">{selectedConfig.standardOvertimeThreshold} jam/bulan</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Tunjangan Transport</label>
+                  <p className="mt-1 text-sm text-gray-900">Rp {selectedConfig.transportAllowanceRate.toLocaleString()}/hari</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Tunjangan Makan</label>
+                  <p className="mt-1 text-sm text-gray-900">Rp {selectedConfig.mealAllowanceRate.toLocaleString()}/hari</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
 
 // Salary Structure Component
 const SalaryStructureComponent = ({ employees, formatCurrency }: any) => {
-  const salaryStructures = [
-    { level: 'Junior', position: 'Software Developer', minSalary: 6000000, maxSalary: 8000000, baseSalary: 7000000 },
-    { level: 'Senior', position: 'Software Developer', minSalary: 9000000, maxSalary: 12000000, baseSalary: 10500000 },
-    { level: 'Lead', position: 'Software Developer', minSalary: 13000000, maxSalary: 16000000, baseSalary: 14500000 },
-    { level: 'Junior', position: 'UI/UX Designer', minSalary: 5000000, maxSalary: 7000000, baseSalary: 6000000 },
-    { level: 'Senior', position: 'UI/UX Designer', minSalary: 8000000, maxSalary: 10000000, baseSalary: 9000000 },
-  ];
+  const [salaryStructures, setSalaryStructures] = useState([
+    { id: '1', level: 'Junior', position: 'Software Developer', minSalary: 6000000, maxSalary: 8000000, baseSalary: 7000000, active: true },
+    { id: '2', level: 'Senior', position: 'Software Developer', minSalary: 9000000, maxSalary: 12000000, baseSalary: 10500000, active: true },
+    { id: '3', level: 'Lead', position: 'Software Developer', minSalary: 13000000, maxSalary: 16000000, baseSalary: 14500000, active: true },
+    { id: '4', level: 'Junior', position: 'UI/UX Designer', minSalary: 5000000, maxSalary: 7000000, baseSalary: 6000000, active: true },
+    { id: '5', level: 'Senior', position: 'UI/UX Designer', minSalary: 8000000, maxSalary: 10000000, baseSalary: 9000000, active: true },
+    { id: '6', level: 'Intern', position: 'Software Developer', minSalary: 2000000, maxSalary: 3000000, baseSalary: 2500000, active: false },
+  ]);
+  const [showModal, setShowModal] = useState(false);
+  const [editingStructure, setEditingStructure] = useState<any>(null);
+  const [viewingStructure, setViewingStructure] = useState<any>(null);
+  const [formData, setFormData] = useState({
+    level: '',
+    position: '',
+    minSalary: 0,
+    maxSalary: 0,
+    baseSalary: 0,
+    active: true
+  });
+
+  const handleAdd = () => {
+    setEditingStructure(null);
+    setFormData({ level: '', position: '', minSalary: 0, maxSalary: 0, baseSalary: 0, active: true });
+    setShowModal(true);
+  };
+
+  const handleEdit = (structure: any) => {
+    setEditingStructure(structure);
+    setFormData({
+      level: structure.level,
+      position: structure.position,
+      minSalary: structure.minSalary,
+      maxSalary: structure.maxSalary,
+      baseSalary: structure.baseSalary,
+      active: structure.active
+    });
+    setShowModal(true);
+  };
+
+  const handleView = (structure: any) => {
+    setViewingStructure(structure);
+  };
+
+  const handleDelete = (id: string) => {
+    if (window.confirm('Apakah Anda yakin ingin menghapus struktur gaji ini?')) {
+      setSalaryStructures(salaryStructures.filter(s => s.id !== id));
+      alert('Struktur gaji berhasil dihapus!');
+    }
+  };
+
+  const handleSave = () => {
+    if (!formData.level || !formData.position || formData.minSalary <= 0 || formData.maxSalary <= 0) {
+      alert('Mohon lengkapi semua field yang diperlukan!');
+      return;
+    }
+
+    if (formData.minSalary >= formData.maxSalary) {
+      alert('Gaji maksimal harus lebih besar dari gaji minimal!');
+      return;
+    }
+
+    if (editingStructure) {
+      setSalaryStructures(salaryStructures.map(s =>
+        s.id === editingStructure.id
+          ? { ...s, ...formData, id: s.id }
+          : s
+      ));
+      alert('Struktur gaji berhasil diperbarui!');
+    } else {
+      const newStructure = {
+        ...formData,
+        id: Date.now().toString()
+      };
+      setSalaryStructures([...salaryStructures, newStructure]);
+      alert('Struktur gaji berhasil ditambahkan!');
+    }
+    setShowModal(false);
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Struktur Gaji</h2>
-          <p className="mt-1 text-sm text-gray-600">View struktur salary berdasarkan level dan posisi</p>
+          <p className="mt-1 text-sm text-gray-600">Kelola struktur salary berdasarkan level dan posisi</p>
         </div>
-        <button className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 font-medium shadow-lg">
+        <button
+          onClick={handleAdd}
+          className="bg-purple-600 text-white px-6 py-3 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 font-medium shadow-lg"
+        >
           ➕ Tambah Level
         </button>
       </div>
@@ -1104,26 +2091,223 @@ const SalaryStructureComponent = ({ employees, formatCurrency }: any) => {
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gaji Min</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gaji Max</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Gaji Pokok</th>
+              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
               <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Aksi</th>
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {salaryStructures.map((structure, index) => (
-              <tr key={index}>
+            {salaryStructures.map((structure: any) => (
+              <tr key={structure.id}>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{structure.level}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{structure.position}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(structure.minSalary)}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{formatCurrency(structure.maxSalary)}</td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">{formatCurrency(structure.baseSalary)}</td>
+                <td className="px-6 py-4 whitespace-nowrap">
+                  <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                    structure.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                  }`}>
+                    {structure.active ? 'Aktif' : 'Nonaktif'}
+                  </span>
+                </td>
                 <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button className="text-indigo-600 hover:text-indigo-900 mr-3">Edit</button>
-                  <button className="text-red-600 hover:text-red-900">Hapus</button>
+                  <button
+                    onClick={() => handleView(structure)}
+                    className="text-blue-600 hover:text-blue-900 mr-3"
+                  >
+                    View
+                  </button>
+                  <button
+                    onClick={() => handleEdit(structure)}
+                    className="text-yellow-600 hover:text-yellow-900 mr-3"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => handleDelete(structure.id)}
+                    className="text-red-600 hover:text-red-900"
+                  >
+                    Delete
+                  </button>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
       </div>
+
+      {/* Add/Edit Modal */}
+      {showModal && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <h3 className="text-lg font-medium text-gray-900 mb-4">
+                {editingStructure ? 'Edit Struktur Gaji' : 'Tambah Struktur Gaji Baru'}
+              </h3>
+              <div className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Level</label>
+                  <select
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    value={formData.level}
+                    onChange={(e) => setFormData({...formData, level: e.target.value})}
+                  >
+                    <option value="">Pilih Level</option>
+                    <option value="Intern">Intern</option>
+                    <option value="Junior">Junior</option>
+                    <option value="Senior">Senior</option>
+                    <option value="Lead">Lead</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Director">Director</option>
+                  </select>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Posisi</label>
+                  <input
+                    type="text"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                    value={formData.position}
+                    onChange={(e) => setFormData({...formData, position: e.target.value})}
+                    placeholder="Masukkan nama posisi"
+                  />
+                </div>
+                <div className="grid grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Gaji Min (Rp)</label>
+                    <input
+                      type="number"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      value={formData.minSalary}
+                      onChange={(e) => setFormData({...formData, minSalary: Number(e.target.value)})}
+                      placeholder="Min salary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Gaji Max (Rp)</label>
+                    <input
+                      type="number"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      value={formData.maxSalary}
+                      onChange={(e) => setFormData({...formData, maxSalary: Number(e.target.value)})}
+                      placeholder="Max salary"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700">Gaji Pokok (Rp)</label>
+                    <input
+                      type="number"
+                      className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                      value={formData.baseSalary}
+                      onChange={(e) => setFormData({...formData, baseSalary: Number(e.target.value)})}
+                      placeholder="Base salary"
+                    />
+                  </div>
+                </div>
+                <div className="flex items-center">
+                  <input
+                    type="checkbox"
+                    id="active"
+                    className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                    checked={formData.active}
+                    onChange={(e) => setFormData({...formData, active: e.target.checked})}
+                  />
+                  <label htmlFor="active" className="ml-2 block text-sm text-gray-900">
+                    Struktur gaji aktif
+                  </label>
+                </div>
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={() => setShowModal(false)}
+                    className="bg-gray-300 text-gray-700 px-4 py-2 rounded-md hover:bg-gray-400"
+                  >
+                    Batal
+                  </button>
+                  <button
+                    onClick={handleSave}
+                    className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
+                  >
+                    {editingStructure ? 'Update' : 'Tambah'}
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* View Detail Modal */}
+      {viewingStructure && (
+        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
+          <div className="relative top-20 mx-auto p-5 border w-11/12 md:w-1/2 shadow-lg rounded-md bg-white">
+            <div className="mt-3">
+              <div className="flex justify-between items-center mb-4">
+                <h3 className="text-lg font-medium text-gray-900">Detail Struktur Gaji</h3>
+                <button
+                  onClick={() => setViewingStructure(null)}
+                  className="text-gray-400 hover:text-gray-600"
+                >
+                  ✕
+                </button>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Level</label>
+                  <p className="mt-1 text-sm text-gray-900">{viewingStructure.level}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Posisi</label>
+                  <p className="mt-1 text-sm text-gray-900">{viewingStructure.position}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Gaji Minimal</label>
+                  <p className="mt-1 text-sm text-gray-900">{formatCurrency(viewingStructure.minSalary)}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Gaji Maksimal</label>
+                  <p className="mt-1 text-sm text-gray-900">{formatCurrency(viewingStructure.maxSalary)}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Gaji Pokok</label>
+                  <p className="mt-1 text-sm text-gray-900">{formatCurrency(viewingStructure.baseSalary)}</p>
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700">Status</label>
+                  <p className="mt-1 text-sm">
+                    <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
+                      viewingStructure.active ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'
+                    }`}>
+                      {viewingStructure.active ? 'Aktif' : 'Nonaktif'}
+                    </span>
+                  </p>
+                </div>
+              </div>
+              <div className="mt-4 pt-4 border-t">
+                <div className="grid grid-cols-3 gap-4 text-center">
+                  <div>
+                    <p className="text-xs text-gray-500">Range Salary</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {((viewingStructure.maxSalary - viewingStructure.minSalary) / viewingStructure.minSalary * 100).toFixed(1)}%
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Midpoint</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {formatCurrency((viewingStructure.minSalary + viewingStructure.maxSalary) / 2)}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-500">Position in Range</p>
+                    <p className="text-sm font-medium text-gray-900">
+                      {((viewingStructure.baseSalary - viewingStructure.minSalary) / (viewingStructure.maxSalary - viewingStructure.minSalary) * 100).toFixed(1)}%
+                    </p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
