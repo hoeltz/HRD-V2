@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getFromStorage, setToStorage } from '../utils/storage';
 import { Attendance, Employee } from '../utils/types';
 
@@ -9,13 +9,23 @@ const AttendancePage: React.FC = () => {
   const [currentAttendance, setCurrentAttendance] = useState<Attendance | null>(null);
   const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
 
+  const checkCurrentAttendance = useCallback(() => {
+    if (!selectedEmployee) return;
+
+    const today = new Date().toISOString().split('T')[0];
+    const todayAttendance = attendance.find(
+      att => att.employeeId === selectedEmployee && att.date === today
+    );
+    setCurrentAttendance(todayAttendance || null);
+  }, [selectedEmployee, attendance]);
+
   useEffect(() => {
     loadData();
   }, []);
 
   useEffect(() => {
     checkCurrentAttendance();
-  }, [selectedEmployee]);
+  }, [checkCurrentAttendance]);
 
   const loadData = () => {
     const employeesData = getFromStorage('employees') || [];
@@ -24,15 +34,6 @@ const AttendancePage: React.FC = () => {
     setAttendance(attendanceData);
   };
 
-  const checkCurrentAttendance = () => {
-    if (!selectedEmployee) return;
-
-    const today = new Date().toISOString().split('T')[0];
-    const todayAttendance = attendance.find(
-      att => att.employeeId === selectedEmployee && att.date === today
-    );
-    setCurrentAttendance(todayAttendance || null);
-  };
 
   const handleCheckIn = () => {
     if (!selectedEmployee) return;

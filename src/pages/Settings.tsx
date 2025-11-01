@@ -1,10 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
 import { getFromStorage, setToStorage } from '../utils/storage';
-import { User } from '../utils/types';
 
 const Settings: React.FC = () => {
-  const { user, logout } = useAuth();
+  const { user } = useAuth();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [profileData, setProfileData] = useState({
     name: '',

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { getFromStorage, setToStorage } from '../utils/storage';
 import { Employee } from '../utils/types';
 import TabbedEmployeeForm from '../components/TabbedEmployeeForm';
@@ -11,20 +11,7 @@ const Employees: React.FC = () => {
   const [showForm, setShowForm] = useState(false);
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
 
-  useEffect(() => {
-    loadEmployees();
-  }, []);
-
-  useEffect(() => {
-    filterEmployees();
-  }, [employees, searchTerm, departmentFilter]);
-
-  const loadEmployees = () => {
-    const data = getFromStorage('employees') || [];
-    setEmployees(data);
-  };
-
-  const filterEmployees = () => {
+  const filterEmployees = useCallback(() => {
     let filtered = employees;
 
     if (searchTerm) {
@@ -40,7 +27,21 @@ const Employees: React.FC = () => {
     }
 
     setFilteredEmployees(filtered);
+  }, [employees, searchTerm, departmentFilter]);
+
+  useEffect(() => {
+    loadEmployees();
+  }, []);
+
+  useEffect(() => {
+    filterEmployees();
+  }, [employees, searchTerm, departmentFilter, filterEmployees]);
+
+  const loadEmployees = () => {
+    const data = getFromStorage('employees') || [];
+    setEmployees(data);
   };
+
 
   const handleSave = (employeeData: Employee) => {
     if (editingEmployee) {
