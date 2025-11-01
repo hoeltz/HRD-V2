@@ -1,0 +1,10 @@
+# Vercel deployment troubleshooting
+node_modules/
+npm-debug.log*
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# Additional cache to force rebuild
+.git/
