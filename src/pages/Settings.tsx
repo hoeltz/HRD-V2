@@ -85,14 +85,9 @@ const Settings: React.FC = () => {
         return;
       }
 
-      // Check if image is square (1:1 ratio)
+      // Load and validate image
       const img = new Image();
       img.onload = () => {
-        if (img.width !== img.height) {
-          alert('Logo harus memiliki rasio aspek 1:1 (persegi)!');
-          return;
-        }
-
         const reader = new FileReader();
         reader.onload = (event) => {
           const result = event.target?.result as string;
@@ -247,7 +242,7 @@ const Settings: React.FC = () => {
                     />
                   </label>
                   <p className="text-xs text-gray-500 mt-1">
-                    Format: JPEG, PNG. Ukuran maksimal 2MB. Rasio 1:1 (persegi).
+                    Format: JPEG, PNG. Ukuran maksimal 2MB. Mendukung berbagai aspek rasio.
                   </p>
                 </div>
               </div>
