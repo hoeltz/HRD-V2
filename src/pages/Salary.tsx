@@ -221,72 +221,397 @@ const SalarySlipsComponent = ({
     alert('Slip gaji berhasil dibuat!');
   };
 
+  const [selectedSalaryIndex, setSelectedSalaryIndex] = useState<number | null>(null);
+  const [expandedSections, setExpandedSections] = useState<{
+    basic: boolean;
+    allowances: boolean;
+    deductions: boolean;
+    summary: boolean;
+  }>({
+    basic: true,
+    allowances: true,
+    deductions: false,
+    summary: true,
+  });
+
+  const toggleSection = (section: keyof typeof expandedSections) => {
+    setExpandedSections(prev => ({
+      ...prev,
+      [section]: !prev[section]
+    }));
+  };
+
+  const handlePrintSlip = (salary: Salary) => {
+    const employee = employees.find((emp: Employee) => emp.id === salary.employeeId);
+    if (!employee) return;
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) return;
+
+    const printContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>${settings.salarySlipLabels.headerTitle}</title>
+        <style>
+          body { font-family: Arial, sans-serif; margin: 40px; }
+          .header { text-align: center; margin-bottom: 30px; border-bottom: 2px solid #000; padding-bottom: 20px; }
+          .logo { width: 80px; height: 80px; margin: 0 auto 10px; }
+          .title { font-size: 24px; font-weight: bold; margin: 10px 0; }
+          .company { font-size: 18px; margin: 5px 0; }
+          .employee-info { margin: 20px 0; }
+          .info-row { display: flex; justify-content: space-between; margin: 5px 0; }
+          .breakdown { margin: 20px 0; }
+          .section { margin: 15px 0; }
+          .section-title { font-weight: bold; border-bottom: 1px solid #ccc; padding-bottom: 5px; margin-bottom: 10px; }
+          .amount { text-align: right; }
+          .total { font-weight: bold; font-size: 16px; border-top: 2px solid #000; padding-top: 10px; margin-top: 10px; }
+          .footer { text-align: center; margin-top: 30px; font-style: italic; }
+          @media print { body { margin: 20px; } }
+        </style>
+      </head>
+      <body>
+        <div class="header">
+          ${settings.logoData ? `<img src="${settings.logoData}" class="logo" alt="Logo">` : ''}
+          <div class="title">${settings.salarySlipLabels.headerTitle}</div>
+          <div class="company">${settings.salarySlipLabels.companyName}</div>
+        </div>
+        
+        <div class="employee-info">
+          <div class="info-row">
+            <span><strong>${settings.salarySlipLabels.fieldNames.employeeName}:</strong></span>
+            <span>${employee.name}</span>
+          </div>
+          <div class="info-row">
+            <span><strong>${settings.salarySlipLabels.fieldNames.position}:</strong></span>
+            <span>${employee.position}</span>
+          </div>
+          <div class="info-row">
+            <span><strong>${settings.salarySlipLabels.fieldNames.department}:</strong></span>
+            <span>${employee.department}</span>
+          </div>
+          <div class="info-row">
+            <span><strong>${settings.salarySlipLabels.fieldNames.period}:</strong></span>
+            <span>${salary.month} ${salary.year}</span>
+          </div>
+        </div>
+
+        <div class="breakdown">
+          <div class="section">
+            <div class="section-title">PENGHASILAN</div>
+            <div class="info-row">
+              <span>${settings.salarySlipLabels.fieldNames.baseSalary}</span>
+              <span class="amount">${formatCurrency(salary.baseSalary)}</span>
+            </div>
+            <div class="info-row">
+              <span>${settings.salarySlipLabels.fieldNames.allowances}</span>
+              <span class="amount">${formatCurrency(salary.allowances)}</span>
+            </div>
+          </div>
+          
+          <div class="total">
+            <div class="info-row">
+              <span>TOTAL PENGHASILAN</span>
+              <span class="amount">${formatCurrency(salary.baseSalary + salary.allowances)}</span>
+            </div>
+          </div>
+
+          <div class="section">
+            <div class="section-title">POTONGAN</div>
+            <div class="info-row">
+              <span>${settings.salarySlipLabels.fieldNames.deductions}</span>
+              <span class="amount">${formatCurrency(salary.deductions)}</span>
+            </div>
+          </div>
+
+          <div class="total">
+            <div class="info-row">
+              <span>${settings.salarySlipLabels.fieldNames.netSalary}</span>
+              <span class="amount">${formatCurrency(salary.netSalary)}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="footer">
+          <p>${settings.salarySlipLabels.footerText}</p>
+          <p>Dicetak pada: ${new Date().toLocaleDateString('id-ID', {
+            weekday: 'long',
+            year: 'numeric',
+            month: 'long',
+            day: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit'
+          })}</p>
+        </div>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(printContent);
+    printWindow.document.close();
+    printWindow.print();
+  };
+
+  const handleExportToPDF = (salary: Salary) => {
+    // Simple export to text file (in real app, use PDF library)
+    const employee = employees.find((emp: Employee) => emp.id === salary.employeeId);
+    if (!employee) return;
+
+    const content = `
+${settings.salarySlipLabels.headerTitle}
+${settings.salarySlipLabels.companyName}
+${'='.repeat(40)}
+
+${settings.salarySlipLabels.fieldNames.employeeName}: ${employee.name}
+${settings.salarySlipLabels.fieldNames.position}: ${employee.position}
+${settings.salarySlipLabels.fieldNames.department}: ${employee.department}
+${settings.salarySlipLabels.fieldNames.period}: ${salary.month} ${salary.year}
+
+PENGHASILAN:
+${settings.salarySlipLabels.fieldNames.baseSalary}: ${formatCurrency(salary.baseSalary)}
+${settings.salarySlipLabels.fieldNames.allowances}: ${formatCurrency(salary.allowances)}
+TOTAL PENGHASILAN: ${formatCurrency(salary.baseSalary + salary.allowances)}
+
+POTONGAN:
+${settings.salarySlipLabels.fieldNames.deductions}: ${formatCurrency(salary.deductions)}
+
+${settings.salarySlipLabels.fieldNames.netSalary}: ${formatCurrency(salary.netSalary)}
+
+${settings.salarySlipLabels.footerText}
+Dicetak pada: ${new Date().toLocaleDateString('id-ID')}
+    `.trim();
+
+    const blob = new Blob([content], { type: 'text/plain' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `slip-gaji-${employee.name}-${salary.month}-${salary.year}.txt`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    URL.revokeObjectURL(url);
+  };
+
+  const navigateToSalary = (direction: 'prev' | 'next') => {
+    if (selectedSalaryIndex === null) return;
+    
+    const newIndex = direction === 'prev'
+      ? selectedSalaryIndex - 1
+      : selectedSalaryIndex + 1;
+    
+    if (newIndex >= 0 && newIndex < salaryDetails.length) {
+      setSelectedSalaryIndex(newIndex);
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <h2 className="text-lg font-medium text-gray-900">Daftar Slip Gaji</h2>
-        <button
-          onClick={() => setShowGenerateModal(true)}
-          className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
-        >
-          Generate Slip Gaji
-        </button>
+        <div className="flex space-x-2">
+          <button
+            onClick={() => setShowGenerateModal(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+          >
+            Generate Slip Gaji
+          </button>
+        </div>
       </div>
+
+      {/* Navigation Controls */}
+      {selectedSalaryIndex !== null && (
+        <div className="flex items-center justify-between bg-gray-50 p-4 rounded-lg">
+          <button
+            onClick={() => navigateToSalary('prev')}
+            disabled={selectedSalaryIndex === 0}
+            className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            ← Sebelumnya
+          </button>
+          <span className="text-sm text-gray-600">
+            Slip {selectedSalaryIndex + 1} dari {salaryDetails.length}
+          </span>
+          <button
+            onClick={() => navigateToSalary('next')}
+            disabled={selectedSalaryIndex === salaryDetails.length - 1}
+            className="flex items-center px-3 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-md hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            Selanjutnya →
+          </button>
+        </div>
+      )}
 
       {/* Salary List */}
       <div className="bg-white shadow overflow-hidden sm:rounded-md">
         <ul className="divide-y divide-gray-200">
-          {salaryDetails.map((salary: Salary) => {
+          {salaryDetails.map((salary: Salary, index: number) => {
             const employee = employees.find((emp: Employee) => emp.id === salary.employeeId);
+            const isSelected = selectedSalaryIndex === index;
+            
             return (
-              <li key={salary.id} className="px-6 py-4">
+              <li key={salary.id} className={`${isSelected ? 'bg-blue-50 border-l-4 border-blue-500' : 'px-6 py-4'}`}>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center">
-                    <div className="flex-shrink-0 h-10 w-10">
+                  <div className="flex items-center space-x-4">
+                    <div className="flex-shrink-0 h-12 w-12">
                       {settings.logoData ? (
-                        <img src={settings.logoData} alt="Logo" className="h-10 w-10 rounded-full object-cover" />
+                        <img src={settings.logoData} alt="Logo" className="h-12 w-12 rounded-full object-cover" />
                       ) : (
-                        <div className="h-10 w-10 rounded-full bg-blue-600 flex items-center justify-center">
+                        <div className="h-12 w-12 rounded-full bg-blue-600 flex items-center justify-center">
                           <span className="text-sm font-medium text-white">
                             {employee?.name.charAt(0).toUpperCase()}
                           </span>
                         </div>
                       )}
                     </div>
-                    <div className="ml-4">
-                      <div className="text-sm font-medium text-gray-900">{employee?.name}</div>
+                    <div>
+                      <div className="text-lg font-medium text-gray-900">{employee?.name}</div>
                       <div className="text-sm text-gray-500">
                         {salary.month} {salary.year} - {employee?.position}
                       </div>
                     </div>
                   </div>
-                  <div className="text-right">
-                    <div className="text-lg font-medium text-gray-900">
-                      {formatCurrency(salary.netSalary)}
+                  <div className="flex items-center space-x-4">
+                    <div className="text-right">
+                      <div className="text-xl font-semibold text-gray-900">
+                        {formatCurrency(salary.netSalary)}
+                      </div>
+                      <div className="text-sm text-gray-500">{settings.salarySlipLabels.fieldNames.netSalary}</div>
                     </div>
-                    <div className="text-sm text-gray-500">Gaji Bersih</div>
+                    <div className="flex space-x-2">
+                      <button
+                        onClick={() => setSelectedSalaryIndex(isSelected ? null : index)}
+                        className="bg-gray-100 text-gray-700 px-3 py-2 rounded-md hover:bg-gray-200 text-sm"
+                      >
+                        {isSelected ? 'Tutup' : 'Detail'}
+                      </button>
+                      <button
+                        onClick={() => handlePrintSlip(salary)}
+                        className="bg-green-600 text-white px-3 py-2 rounded-md hover:bg-green-700 text-sm"
+                      >
+                        Print
+                      </button>
+                      <button
+                        onClick={() => handleExportToPDF(salary)}
+                        className="bg-blue-600 text-white px-3 py-2 rounded-md hover:bg-blue-700 text-sm"
+                      >
+                        Export
+                      </button>
+                    </div>
                   </div>
                 </div>
 
-                {/* Enhanced breakdown */}
-                <div className="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                  <div>
-                    <span className="font-medium text-gray-500">Gaji Pokok:</span>
-                    <div className="text-gray-900">{formatCurrency(salary.baseSalary)}</div>
+                {/* Collapsible Detailed View */}
+                {isSelected && (
+                  <div className="mt-6 border-t pt-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      {/* Basic Information */}
+                      <div className="space-y-4">
+                        <button
+                          onClick={() => toggleSection('basic')}
+                          className="flex items-center justify-between w-full text-left"
+                        >
+                          <h3 className="text-lg font-medium text-gray-900">Informasi Karyawan</h3>
+                          <svg className={`w-5 h-5 transition-transform ${expandedSections.basic ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                        {expandedSections.basic && (
+                          <div className="space-y-2 pl-4 border-l-2 border-gray-200">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">{settings.salarySlipLabels.fieldNames.employeeName}:</span>
+                              <span className="font-medium">{employee?.name}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">{settings.salarySlipLabels.fieldNames.position}:</span>
+                              <span className="font-medium">{employee?.position}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">{settings.salarySlipLabels.fieldNames.department}:</span>
+                              <span className="font-medium">{employee?.department}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">{settings.salarySlipLabels.fieldNames.period}:</span>
+                              <span className="font-medium">{salary.month} {salary.year}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Earnings Breakdown */}
+                      <div className="space-y-4">
+                        <button
+                          onClick={() => toggleSection('allowances')}
+                          className="flex items-center justify-between w-full text-left"
+                        >
+                          <h3 className="text-lg font-medium text-gray-900">Penghasilan</h3>
+                          <svg className={`w-5 h-5 transition-transform ${expandedSections.allowances ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                        {expandedSections.allowances && (
+                          <div className="space-y-2 pl-4 border-l-2 border-green-200">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">{settings.salarySlipLabels.fieldNames.baseSalary}:</span>
+                              <span className="font-medium text-green-600">{formatCurrency(salary.baseSalary)}</span>
+                            </div>
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">{settings.salarySlipLabels.fieldNames.allowances}:</span>
+                              <span className="font-medium text-green-600">{formatCurrency(salary.allowances)}</span>
+                            </div>
+                            <div className="flex justify-between border-t pt-2">
+                              <span className="font-medium">Total Penghasilan:</span>
+                              <span className="font-bold text-green-700">{formatCurrency(salary.baseSalary + salary.allowances)}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Deductions */}
+                      <div className="space-y-4">
+                        <button
+                          onClick={() => toggleSection('deductions')}
+                          className="flex items-center justify-between w-full text-left"
+                        >
+                          <h3 className="text-lg font-medium text-gray-900">Potongan</h3>
+                          <svg className={`w-5 h-5 transition-transform ${expandedSections.deductions ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                        {expandedSections.deductions && (
+                          <div className="space-y-2 pl-4 border-l-2 border-red-200">
+                            <div className="flex justify-between">
+                              <span className="text-gray-600">{settings.salarySlipLabels.fieldNames.deductions}:</span>
+                              <span className="font-medium text-red-600">{formatCurrency(salary.deductions)}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Summary */}
+                      <div className="space-y-4">
+                        <button
+                          onClick={() => toggleSection('summary')}
+                          className="flex items-center justify-between w-full text-left"
+                        >
+                          <h3 className="text-lg font-medium text-gray-900">Rangkuman</h3>
+                          <svg className={`w-5 h-5 transition-transform ${expandedSections.summary ? 'rotate-180' : ''}`} fill="currentColor" viewBox="0 0 20 20">
+                            <path fillRule="evenodd" d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" clipRule="evenodd" />
+                          </svg>
+                        </button>
+                        {expandedSections.summary && (
+                          <div className="pl-4 border-l-2 border-blue-200 bg-blue-50 p-4 rounded-r-lg">
+                            <div className="text-center">
+                              <div className="text-2xl font-bold text-blue-700">
+                                {formatCurrency(salary.netSalary)}
+                              </div>
+                              <div className="text-sm text-blue-600">{settings.salarySlipLabels.fieldNames.netSalary}</div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div>
-                    <span className="font-medium text-gray-500">Tunjangan:</span>
-                    <div className="text-gray-900">{formatCurrency(salary.allowances)}</div>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-500">Potongan:</span>
-                    <div className="text-gray-900">{formatCurrency(salary.deductions)}</div>
-                  </div>
-                  <div>
-                    <span className="font-medium text-gray-500">Gaji Bersih:</span>
-                    <div className="text-gray-900 font-medium">{formatCurrency(salary.netSalary)}</div>
-                  </div>
-                </div>
+                )}
               </li>
             );
           })}

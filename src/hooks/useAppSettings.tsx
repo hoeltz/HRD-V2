@@ -13,7 +13,24 @@ export const useAppSettings = () => {
   const resetSettings = () => {
     const defaultSettings = {
       appName: 'My Office',
-      logoData: null
+      logoData: null,
+      salarySlipLabels: {
+        headerTitle: 'SLIP GAJI',
+        companyName: 'My Office',
+        footerText: 'Terima kasih atas dedikasi Anda',
+        fieldNames: {
+          employeeName: 'Nama Karyawan',
+          employeeId: 'ID Karyawan',
+          position: 'Posisi',
+          department: 'Departemen',
+          baseSalary: 'Gaji Pokok',
+          allowances: 'Tunjangan',
+          deductions: 'Potongan',
+          grossSalary: 'Gaji Bruto',
+          netSalary: 'Gaji Bersih',
+          period: 'Periode',
+        },
+      }
     };
     setSettings(defaultSettings);
     updateAppSettings(defaultSettings);

@@ -18,6 +18,9 @@ const Settings: React.FC = () => {
     newPassword: '',
     confirmPassword: '',
   });
+  
+  // Salary slip label customization
+  const [salaryLabels, setSalaryLabels] = useState(settings.salarySlipLabels);
 
   useEffect(() => {
     // Load notification settings
@@ -32,12 +35,21 @@ const Settings: React.FC = () => {
         phone: '+62-812-3456-7890',
       });
     }
-  }, [user]);
+    
+    // Initialize salary labels from settings
+    setSalaryLabels(settings.salarySlipLabels);
+  }, [user, settings]);
 
   const handleAppNameChange = (e: React.FormEvent) => {
     e.preventDefault();
     updateSettings({ appName });
     alert('Nama aplikasi berhasil diperbarui!');
+  };
+
+  const handleSalaryLabelsChange = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateSettings({ salarySlipLabels: salaryLabels });
+    alert('Label slip gaji berhasil diperbarui!');
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -235,6 +247,243 @@ const Settings: React.FC = () => {
               )}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Salary Slip Label Customization */}
+      <div className="bg-white shadow rounded-lg">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-medium text-gray-900">Customization Label Slip Gaji</h2>
+        </div>
+        <div className="p-6">
+          <form onSubmit={handleSalaryLabelsChange} className="space-y-6">
+            {/* Header Settings */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Judul Header Slip
+                </label>
+                <input
+                  type="text"
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  value={salaryLabels.headerTitle}
+                  onChange={(e) => setSalaryLabels({
+                    ...salaryLabels,
+                    headerTitle: e.target.value
+                  })}
+                  placeholder="SLIP GAJI"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nama Perusahaan
+                </label>
+                <input
+                  type="text"
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  value={salaryLabels.companyName}
+                  onChange={(e) => setSalaryLabels({
+                    ...salaryLabels,
+                    companyName: e.target.value
+                  })}
+                  placeholder="My Office HRD"
+                />
+              </div>
+            </div>
+
+            {/* Footer Settings */}
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Teks Footer Slip
+              </label>
+              <input
+                type="text"
+                className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                value={salaryLabels.footerText}
+                onChange={(e) => setSalaryLabels({
+                  ...salaryLabels,
+                  footerText: e.target.value
+                })}
+                placeholder="Terima kasih atas dedikasi Anda"
+              />
+            </div>
+
+            {/* Field Names Customization */}
+            <div className="border-t pt-6">
+              <h3 className="text-md font-medium text-gray-800 mb-4">Customization Nama Field</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nama Karyawan</label>
+                  <input
+                    type="text"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={salaryLabels.fieldNames.employeeName}
+                    onChange={(e) => setSalaryLabels({
+                      ...salaryLabels,
+                      fieldNames: {
+                        ...salaryLabels.fieldNames,
+                        employeeName: e.target.value
+                      }
+                    })}
+                    placeholder="Nama Karyawan"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">ID Karyawan</label>
+                  <input
+                    type="text"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={salaryLabels.fieldNames.employeeId}
+                    onChange={(e) => setSalaryLabels({
+                      ...salaryLabels,
+                      fieldNames: {
+                        ...salaryLabels.fieldNames,
+                        employeeId: e.target.value
+                      }
+                    })}
+                    placeholder="ID Karyawan"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Posisi</label>
+                  <input
+                    type="text"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={salaryLabels.fieldNames.position}
+                    onChange={(e) => setSalaryLabels({
+                      ...salaryLabels,
+                      fieldNames: {
+                        ...salaryLabels.fieldNames,
+                        position: e.target.value
+                      }
+                    })}
+                    placeholder="Posisi"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Departemen</label>
+                  <input
+                    type="text"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={salaryLabels.fieldNames.department}
+                    onChange={(e) => setSalaryLabels({
+                      ...salaryLabels,
+                      fieldNames: {
+                        ...salaryLabels.fieldNames,
+                        department: e.target.value
+                      }
+                    })}
+                    placeholder="Departemen"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Gaji Pokok</label>
+                  <input
+                    type="text"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={salaryLabels.fieldNames.baseSalary}
+                    onChange={(e) => setSalaryLabels({
+                      ...salaryLabels,
+                      fieldNames: {
+                        ...salaryLabels.fieldNames,
+                        baseSalary: e.target.value
+                      }
+                    })}
+                    placeholder="Gaji Pokok"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Tunjangan</label>
+                  <input
+                    type="text"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={salaryLabels.fieldNames.allowances}
+                    onChange={(e) => setSalaryLabels({
+                      ...salaryLabels,
+                      fieldNames: {
+                        ...salaryLabels.fieldNames,
+                        allowances: e.target.value
+                      }
+                    })}
+                    placeholder="Tunjangan"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Potongan</label>
+                  <input
+                    type="text"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={salaryLabels.fieldNames.deductions}
+                    onChange={(e) => setSalaryLabels({
+                      ...salaryLabels,
+                      fieldNames: {
+                        ...salaryLabels.fieldNames,
+                        deductions: e.target.value
+                      }
+                    })}
+                    placeholder="Potongan"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Gaji Bruto</label>
+                  <input
+                    type="text"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={salaryLabels.fieldNames.grossSalary}
+                    onChange={(e) => setSalaryLabels({
+                      ...salaryLabels,
+                      fieldNames: {
+                        ...salaryLabels.fieldNames,
+                        grossSalary: e.target.value
+                      }
+                    })}
+                    placeholder="Gaji Bruto"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Gaji Bersih</label>
+                  <input
+                    type="text"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={salaryLabels.fieldNames.netSalary}
+                    onChange={(e) => setSalaryLabels({
+                      ...salaryLabels,
+                      fieldNames: {
+                        ...salaryLabels.fieldNames,
+                        netSalary: e.target.value
+                      }
+                    })}
+                    placeholder="Gaji Bersih"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Periode</label>
+                  <input
+                    type="text"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={salaryLabels.fieldNames.period}
+                    onChange={(e) => setSalaryLabels({
+                      ...salaryLabels,
+                      fieldNames: {
+                        ...salaryLabels.fieldNames,
+                        period: e.target.value
+                      }
+                    })}
+                    placeholder="Periode"
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+              >
+                Simpan Label
+              </button>
+            </div>
+          </form>
         </div>
       </div>
 

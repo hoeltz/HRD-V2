@@ -30,6 +30,23 @@ export const removeFromStorage = (key: string): void => {
 export interface AppSettings {
   appName: string;
   logoData: string | null;
+  salarySlipLabels: {
+    headerTitle: string;
+    companyName: string;
+    footerText: string;
+    fieldNames: {
+      employeeName: string;
+      employeeId: string;
+      position: string;
+      department: string;
+      baseSalary: string;
+      allowances: string;
+      deductions: string;
+      grossSalary: string;
+      netSalary: string;
+      period: string;
+    };
+  };
 }
 
 export const getAppSettings = (): AppSettings => {
