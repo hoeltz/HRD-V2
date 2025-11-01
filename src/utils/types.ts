@@ -143,3 +143,122 @@ export interface User {
   role: 'admin' | 'employee';
   employeeId?: string;
 }
+
+// Enhanced Salary Management Types
+
+export interface SalaryDetail {
+  id: string;
+  employeeId: string;
+  month: string;
+  year: number;
+  
+  // Basic Components
+  baseSalary: number;
+  hoursWorked: number;
+  hourlyRate: number;
+  
+  // Allowances
+  allowances: AllowanceBreakdown;
+  
+  // Deductions
+  deductions: DeductionBreakdown;
+  
+  // Bonuses
+  bonuses: BonusBreakdown;
+  
+  // Calculated Fields
+  grossSalary: number;
+  totalDeductions: number;
+  netSalary: number;
+  
+  // Additional Info
+  workingDays: number;
+  overtimeHours: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface AllowanceBreakdown {
+  transport: number;
+  meal: number;
+  health: number;
+  position: number;
+  skill: number;
+  other: number;
+}
+
+export interface DeductionBreakdown {
+  incomeTax: number;
+  healthInsurance: number;
+  employmentInsurance: number;
+  loan: number;
+  other: number;
+}
+
+export interface BonusBreakdown {
+  performance: number;
+  annual: number;
+  holiday: number;
+  attendance: number;
+  other: number;
+}
+
+export interface PayrollConfig {
+  id: string;
+  workingHoursPerDay: number;
+  workingDaysPerMonth: number;
+  overtimeMultiplier: number;
+  standardOvertimeThreshold: number;
+  monthlyTaxExemption: number;
+  transportAllowanceRate: number;
+  mealAllowanceRate: number;
+  healthInsuranceRate: number;
+  employmentInsuranceRate: number;
+}
+
+export interface SalaryStructure {
+  id: string;
+  level: string;
+  position: string;
+  department: string;
+  minSalary: number;
+  maxSalary: number;
+  baseSalary: number;
+  transportAllowance: number;
+  mealAllowance: number;
+  healthAllowance: number;
+}
+
+export interface AllowanceConfig {
+  id: string;
+  name: string;
+  type: 'transport' | 'meal' | 'health' | 'position' | 'skill' | 'other';
+  amount: number;
+  calculationType: 'fixed' | 'percentage';
+  percentageBase?: number; // base salary percentage if percentage type
+  employeeSpecific?: boolean;
+  positionSpecific?: boolean;
+  departmentSpecific?: boolean;
+}
+
+export interface DeductionConfig {
+  id: string;
+  name: string;
+  type: 'incomeTax' | 'healthInsurance' | 'employmentInsurance' | 'loan' | 'other';
+  calculationType: 'fixed' | 'percentage';
+  percentage?: number;
+  fixedAmount?: number;
+  taxBracket?: number; // for progressive tax calculation
+  mandatory: boolean;
+}
+
+export interface BonusConfig {
+  id: string;
+  name: string;
+  type: 'performance' | 'annual' | 'holiday' | 'attendance' | 'other';
+  calculationType: 'fixed' | 'percentage';
+  amount: number;
+  percentage?: number;
+  criteria?: string;
+  frequency: 'monthly' | 'quarterly' | 'annual' | 'on-demand';
+}

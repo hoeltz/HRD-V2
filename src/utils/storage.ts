@@ -49,3 +49,79 @@ export const updateAppSettings = (updates: Partial<AppSettings>): void => {
   const newSettings = { ...currentSettings, ...updates };
   saveAppSettings(newSettings);
 };
+
+// Enhanced Salary Management Storage
+export interface PayrollSettings {
+  payrollConfigs: any[];
+  salaryStructures: any[];
+  allowanceConfigs: any[];
+  deductionConfigs: any[];
+  bonusConfigs: any[];
+}
+
+export const getPayrollSettings = (): PayrollSettings => {
+  const settings = getFromStorage('payrollSettings');
+  return settings || {
+    payrollConfigs: [],
+    salaryStructures: [],
+    allowanceConfigs: [],
+    deductionConfigs: [],
+    bonusConfigs: []
+  };
+};
+
+export const savePayrollSettings = (settings: PayrollSettings): void => {
+  setToStorage('payrollSettings', settings);
+};
+
+export const updatePayrollSettings = (updates: Partial<PayrollSettings>): void => {
+  const currentSettings = getPayrollSettings();
+  const newSettings = { ...currentSettings, ...updates };
+  savePayrollSettings(newSettings);
+};
+
+// Salary Detail Management
+export interface SalaryDetail {
+  id: string;
+  employeeId: string;
+  month: string;
+  year: number;
+  baseSalary: number;
+  allowances: number;
+  deductions: number;
+  bonuses: number;
+  grossSalary: number;
+  totalDeductions: number;
+  netSalary: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export const getSalaryDetails = (): SalaryDetail[] => {
+  return getFromStorage('salaryDetails') || [];
+};
+
+export const saveSalaryDetails = (details: SalaryDetail[]): void => {
+  setToStorage('salaryDetails', details);
+};
+
+export const addSalaryDetail = (detail: SalaryDetail): void => {
+  const details = getSalaryDetails();
+  const updatedDetails = [...details, detail];
+  saveSalaryDetails(updatedDetails);
+};
+
+export const updateSalaryDetail = (updatedDetail: SalaryDetail): void => {
+  const details = getSalaryDetails();
+  const index = details.findIndex(d => d.id === updatedDetail.id);
+  if (index !== -1) {
+    details[index] = updatedDetail;
+    saveSalaryDetails(details);
+  }
+};
+
+export const deleteSalaryDetail = (id: string): void => {
+  const details = getSalaryDetails();
+  const updatedDetails = details.filter(d => d.id !== id);
+  saveSalaryDetails(updatedDetails);
+};
