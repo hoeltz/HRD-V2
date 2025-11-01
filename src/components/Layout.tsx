@@ -57,11 +57,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           {/* Mobile sidebar content */}
           <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
             <div className="flex-shrink-0 px-4 mb-4 text-center">
-                <img
-                  src="/logo512.png"
-                  alt="My Office HRD Logo"
-                  className="h-16 w-16 mx-auto mb-2 rounded-lg shadow-sm"
-                />
+                <div className="h-16 w-16 mx-auto mb-2 bg-blue-600 rounded-lg flex items-center justify-center">
+                  <span className="text-white font-bold text-xl">MO</span>
+                </div>
                 <h1 className="text-xl font-bold text-gray-900">My Office</h1>
               </div>
             <nav className="mt-5 px-2 space-y-1">
@@ -103,11 +101,9 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="flex-1 flex flex-col min-h-0 border-r border-gray-200" style={{ backgroundColor: '#8AB9F1' }}>
           <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
             <div className="flex-shrink-0 px-4 mb-4 text-center">
-              <img
-                src="/logo512.png"
-                alt="My Office HRD Logo"
-                className="h-16 w-16 mx-auto mb-2 rounded-lg shadow-sm bg-white/20 p-1"
-              />
+              <div className="h-16 w-16 mx-auto mb-2 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                <span className="text-blue-600 font-bold text-xl">MO</span>
+              </div>
               <h1 className="text-xl font-bold text-black">My Office</h1>
             </div>
             <nav className="mt-5 flex-1 px-2 space-y-1">
