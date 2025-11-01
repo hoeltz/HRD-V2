@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../hooks/useAuth';
+import { useAppContext } from '../contexts/AppContext';
 
 interface LayoutProps {
   children: React.ReactNode;
@@ -9,6 +10,7 @@ interface LayoutProps {
 const Layout: React.FC<LayoutProps> = ({ children }) => {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const { logout } = useAuth();
+  const { settings } = useAppContext();
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -57,10 +59,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
           {/* Mobile sidebar content */}
           <div className="flex-1 h-0 pt-5 pb-4 overflow-y-auto">
             <div className="flex-shrink-0 px-4 mb-4 text-center">
-                <div className="h-16 w-16 mx-auto mb-2 bg-blue-600 rounded-lg flex items-center justify-center">
-                  <span className="text-white font-bold text-xl">MO</span>
-                </div>
-                <h1 className="text-xl font-bold text-gray-900">My Office</h1>
+                {settings.logoData ? (
+                  <img
+                    src={settings.logoData}
+                    alt="App Logo"
+                    className="h-16 w-16 mx-auto mb-2 rounded-lg shadow-sm object-cover"
+                  />
+                ) : (
+                  <div className="h-16 w-16 mx-auto mb-2 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <span className="text-white font-bold text-xl">MO</span>
+                  </div>
+                )}
+                <h1 className="text-xl font-bold text-gray-900">{settings.appName}</h1>
               </div>
             <nav className="mt-5 px-2 space-y-1">
               {navigation.map((item) => (
@@ -101,10 +111,18 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
         <div className="flex-1 flex flex-col min-h-0 border-r border-gray-200" style={{ backgroundColor: '#8AB9F1' }}>
           <div className="flex-1 flex flex-col pt-5 pb-4 overflow-y-auto">
             <div className="flex-shrink-0 px-4 mb-4 text-center">
-              <div className="h-16 w-16 mx-auto mb-2 bg-white rounded-lg flex items-center justify-center shadow-sm">
-                <span className="text-blue-600 font-bold text-xl">MO</span>
-              </div>
-              <h1 className="text-xl font-bold text-black">My Office</h1>
+              {settings.logoData ? (
+                <img
+                  src={settings.logoData}
+                  alt="App Logo"
+                  className="h-16 w-16 mx-auto mb-2 rounded-lg shadow-sm object-cover bg-white/20 p-1"
+                />
+              ) : (
+                <div className="h-16 w-16 mx-auto mb-2 bg-white rounded-lg flex items-center justify-center shadow-sm">
+                  <span className="text-blue-600 font-bold text-xl">MO</span>
+                </div>
+              )}
+              <h1 className="text-xl font-bold text-black">{settings.appName}</h1>
             </div>
             <nav className="mt-5 flex-1 px-2 space-y-1">
               {navigation.map((item) => (

@@ -25,3 +25,27 @@ export const removeFromStorage = (key: string): void => {
     console.error('Error removing from localStorage:', error);
   }
 };
+
+// App settings management
+export interface AppSettings {
+  appName: string;
+  logoData: string | null;
+}
+
+export const getAppSettings = (): AppSettings => {
+  const settings = getFromStorage('appSettings');
+  return settings || {
+    appName: 'My Office',
+    logoData: null
+  };
+};
+
+export const saveAppSettings = (settings: AppSettings): void => {
+  setToStorage('appSettings', settings);
+};
+
+export const updateAppSettings = (updates: Partial<AppSettings>): void => {
+  const currentSettings = getAppSettings();
+  const newSettings = { ...currentSettings, ...updates };
+  saveAppSettings(newSettings);
+};

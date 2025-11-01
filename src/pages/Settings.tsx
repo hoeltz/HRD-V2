@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../hooks/useAuth';
+import { useAppContext } from '../contexts/AppContext';
 import { getFromStorage, setToStorage } from '../utils/storage';
 
 const Settings: React.FC = () => {
   const { user } = useAuth();
+  const { settings, updateSettings } = useAppContext();
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
   const [profileData, setProfileData] = useState({
     name: '',
     email: '',
     phone: '',
   });
+  const [appName, setAppName] = useState(settings.appName);
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -18,8 +21,8 @@ const Settings: React.FC = () => {
 
   useEffect(() => {
     // Load notification settings
-    const settings = getFromStorage('settings') || {};
-    setNotificationsEnabled(settings.notificationsEnabled || false);
+    const appSettings = getFromStorage('settings') || {};
+    setNotificationsEnabled(appSettings.notificationsEnabled || false);
 
     // Load profile data (mock data for demo)
     if (user) {
@@ -30,6 +33,52 @@ const Settings: React.FC = () => {
       });
     }
   }, [user]);
+
+  const handleAppNameChange = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateSettings({ appName });
+    alert('Nama aplikasi berhasil diperbarui!');
+  };
+
+  const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.match(/^image\/(jpeg|png)$/)) {
+        alert('Hanya file JPEG dan PNG yang diizinkan!');
+        return;
+      }
+
+      // Validate file size (max 2MB)
+      if (file.size > 2 * 1024 * 1024) {
+        alert('Ukuran file maksimal 2MB!');
+        return;
+      }
+
+      // Check if image is square (1:1 ratio)
+      const img = new Image();
+      img.onload = () => {
+        if (img.width !== img.height) {
+          alert('Logo harus memiliki rasio aspek 1:1 (persegi)!');
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const result = event.target?.result as string;
+          updateSettings({ logoData: result });
+          alert('Logo berhasil diperbarui!');
+        };
+        reader.readAsDataURL(file);
+      };
+      img.src = URL.createObjectURL(file);
+    }
+  };
+
+  const handleRemoveLogo = () => {
+    updateSettings({ logoData: null });
+    alert('Logo berhasil dihapus!');
+  };
 
   const handleNotificationToggle = () => {
     const newValue = !notificationsEnabled;
@@ -104,6 +153,89 @@ const Settings: React.FC = () => {
       <div>
         <h1 className="text-2xl font-semibold text-gray-900">Pengaturan</h1>
         <p className="mt-1 text-sm text-gray-600">Kelola profil dan pengaturan aplikasi</p>
+      </div>
+
+      {/* App Branding Settings */}
+      <div className="bg-white shadow rounded-lg">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-medium text-gray-900">Branding Aplikasi</h2>
+        </div>
+        <div className="p-6 space-y-6">
+          {/* App Name */}
+          <div>
+            <h3 className="text-md font-medium text-gray-800 mb-4">Nama Aplikasi</h3>
+            <form onSubmit={handleAppNameChange} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Nama Aplikasi (tampil di sidebar dan judul)
+                </label>
+                <input
+                  type="text"
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  value={appName}
+                  onChange={(e) => setAppName(e.target.value)}
+                  placeholder="Masukkan nama aplikasi"
+                />
+              </div>
+              <div className="flex justify-end">
+                <button
+                  type="submit"
+                  className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2"
+                >
+                  Simpan Nama
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Logo Upload */}
+          <div className="border-t pt-6">
+            <h3 className="text-md font-medium text-gray-800 mb-4">Logo Aplikasi</h3>
+            <div className="space-y-4">
+              <div className="flex items-center space-x-6">
+                <div className="flex-shrink-0">
+                  {settings.logoData ? (
+                    <img
+                      src={settings.logoData}
+                      alt="Current Logo"
+                      className="h-16 w-16 rounded-lg object-cover border-2 border-gray-300"
+                    />
+                  ) : (
+                    <div className="h-16 w-16 bg-gray-200 rounded-lg flex items-center justify-center">
+                      <span className="text-gray-500 text-sm">No Logo</span>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <label className="block">
+                    <span className="sr-only">Pilih Logo</span>
+                    <input
+                      type="file"
+                      accept=".jpeg,.jpg,.png"
+                      className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
+                      onChange={handleLogoUpload}
+                    />
+                  </label>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Format: JPEG, PNG. Ukuran maksimal 2MB. Rasio 1:1 (persegi).
+                  </p>
+                </div>
+              </div>
+              
+              {settings.logoData && (
+                <div className="flex space-x-3">
+                  <button
+                    type="button"
+                    onClick={handleRemoveLogo}
+                    className="bg-red-600 text-white px-4 py-2 rounded-md hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-red-500 focus:ring-offset-2"
+                  >
+                    Hapus Logo
+                  </button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Profile Settings */}
