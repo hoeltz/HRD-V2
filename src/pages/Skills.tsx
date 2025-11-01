@@ -144,32 +144,7 @@ const Skills: React.FC = () => {
     status: 'identified' as 'identified' | 'in-progress' | 'addressed'
   });
 
-  const handleAddArrayField = (field: string, setForm: any) => {
-    const currentArray = gapForm[field];
-    setGapForm({
-      ...gapForm,
-      [field]: [...currentArray, '']
-    });
-  };
-
-  const handleUpdateArrayField = (field: string, index: number, value: string, setForm: any) => {
-    const currentArray = gapForm[field];
-    const newArray = [...currentArray];
-    newArray[index] = value;
-    setGapForm({
-      ...gapForm,
-      [field]: newArray
-    });
-  };
-
-  const handleRemoveArrayField = (field: string, index: number, setForm: any) => {
-    const currentArray = gapForm[field];
-    const newArray = currentArray.filter((_: any, i: number) => i !== index);
-    setGapForm({
-      ...gapForm,
-      [field]: newArray
-    });
-  };
+  
 
   const handleSubmitSkill = (e: React.FormEvent) => {
     e.preventDefault();
@@ -457,7 +432,6 @@ const Skills: React.FC = () => {
     switch (status) {
       case 'completed':
       case 'active':
-      case 'completed':
         return 'bg-green-100 text-green-800';
       case 'in-progress':
       case 'certified':
@@ -467,7 +441,6 @@ const Skills: React.FC = () => {
         return 'bg-yellow-100 text-yellow-800';
       case 'expired':
       case 'cancelled':
-      case 'cancelled':
         return 'bg-red-100 text-red-800';
       default:
         return 'bg-gray-100 text-gray-800';
@@ -476,7 +449,6 @@ const Skills: React.FC = () => {
 
   // Filter functions
   const filteredSkills = skills.filter(skill => {
-    const employee = employees.find(emp => emp.id === skill.employeeId);
     const matchesEmployee = !skillFilters.employee || skill.employeeId === skillFilters.employee;
     const matchesCategory = !skillFilters.category || skill.category === skillFilters.category;
     const matchesProficiency = !skillFilters.proficiency || skill.proficiencyLevel === skillFilters.proficiency;

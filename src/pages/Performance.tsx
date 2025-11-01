@@ -318,7 +318,6 @@ const Performance: React.FC = () => {
 
   // Filter reviews and goals
   const filteredReviews = reviews.filter(review => {
-    const employee = employees.find(emp => emp.id === review.employeeId);
     const matchesEmployee = !reviewFilters.employee || review.employeeId === reviewFilters.employee;
     const matchesStatus = !reviewFilters.status || review.status === reviewFilters.status;
     const matchesRating = !reviewFilters.rating || review.overallRating.toString() === reviewFilters.rating;
