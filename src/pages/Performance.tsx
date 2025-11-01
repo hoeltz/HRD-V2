@@ -337,7 +337,7 @@ const Performance: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900">📊 Performance Management</h1>
+        <h1 className="text-2xl font-semibold text-gray-900">📊 Manajemen Kinerja</h1>
         <p className="mt-1 text-sm text-gray-600">Kelola evaluasi kinerja dan target SMART goals karyawan</p>
       </div>
 
@@ -345,9 +345,9 @@ const Performance: React.FC = () => {
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-8">
           {[
-            { key: 'reviews', label: 'Performance Reviews', icon: '📝' },
-            { key: 'goals', label: 'SMART Goals', icon: '🎯' },
-            { key: 'analytics', label: 'Analytics', icon: '📈' }
+            { key: 'reviews', label: 'Ulasan Kinerja', icon: '📝' },
+            { key: 'goals', label: 'Tujuan SMART', icon: '🎯' },
+            { key: 'analytics', label: 'Analitik', icon: '📈' }
           ].map((tab) => (
             <button
               key={tab.key}
@@ -370,7 +370,7 @@ const Performance: React.FC = () => {
           {/* Controls */}
           <div className="bg-white shadow rounded-lg p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-medium text-gray-900">Performance Reviews</h2>
+              <h2 className="text-lg font-medium text-gray-900">Ulasan Kinerja</h2>
               <button
                 onClick={() => {
                   resetReviewForm();
@@ -378,20 +378,20 @@ const Performance: React.FC = () => {
                 }}
                 className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
               >
-                + Add Review
+                + Tambah Ulasan
               </button>
             </div>
 
             {/* Filters */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Employee</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Karyawan</label>
                 <select
                   value={reviewFilters.employee}
                   onChange={(e) => setReviewFilters({...reviewFilters, employee: e.target.value})}
                   className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="">All Employees</option>
+                  <option value="">Semua Karyawan</option>
                   {employees.map(employee => (
                     <option key={employee.id} value={employee.id}>{employee.name}</option>
                   ))}
@@ -404,25 +404,25 @@ const Performance: React.FC = () => {
                   onChange={(e) => setReviewFilters({...reviewFilters, status: e.target.value})}
                   className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="">All Status</option>
+                  <option value="">Semua Status</option>
                   <option value="draft">Draft</option>
-                  <option value="in-review">In Review</option>
-                  <option value="completed">Completed</option>
-                  <option value="archived">Archived</option>
+                  <option value="in-review">Dalam Review</option>
+                  <option value="completed">Selesai</option>
+                  <option value="archived">Diarsipkan</option>
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Period</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Periode</label>
                 <select
                   value={reviewFilters.period}
                   onChange={(e) => setReviewFilters({...reviewFilters, period: e.target.value})}
                   className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="">All Periods</option>
-                  <option value="quarterly">Quarterly</option>
-                  <option value="annual">Annual</option>
-                  <option value="project-based">Project Based</option>
-                  <option value="mid-year">Mid Year</option>
+                  <option value="">Semua Periode</option>
+                  <option value="quarterly">Kuartalan</option>
+                  <option value="annual">Tahunan</option>
+                  <option value="project-based">Berbasis Proyek</option>
+                  <option value="mid-year">Pertengahan Tahun</option>
                 </select>
               </div>
               <div>
@@ -449,12 +449,12 @@ const Performance: React.FC = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employee</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Review Period</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Karyawan</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Periode Review</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rating</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reviewer</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -501,7 +501,7 @@ const Performance: React.FC = () => {
                             onClick={() => handleDeleteReview(review.id)}
                             className="text-red-600 hover:text-red-900"
                           >
-                            Delete
+                            Hapus
                           </button>
                         </td>
                       </tr>
@@ -512,7 +512,7 @@ const Performance: React.FC = () => {
             </div>
             {filteredReviews.length === 0 && (
               <div className="text-center py-8">
-                <p className="text-gray-500">No performance reviews found</p>
+                <p className="text-gray-500">Tidak ada ulasan kinerja ditemukan</p>
               </div>
             )}
           </div>
@@ -546,7 +546,7 @@ const Performance: React.FC = () => {
                   onChange={(e) => setGoalFilters({...goalFilters, employee: e.target.value})}
                   className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="">All Employees</option>
+                  <option value="">Semua Karyawan</option>
                   {employees.map(employee => (
                     <option key={employee.id} value={employee.id}>{employee.name}</option>
                   ))}
@@ -728,7 +728,7 @@ const Performance: React.FC = () => {
           <div className="relative top-20 mx-auto p-5 border w-11/12 max-w-4xl shadow-lg rounded-md bg-white">
             <div className="flex justify-between items-center mb-4">
               <h3 className="text-lg font-medium text-gray-900">
-                {editingReview ? 'Edit Performance Review' : 'New Performance Review'}
+                {editingReview ? 'Edit Ulasan Kinerja' : 'Ulasan Kinerja Baru'}
               </h3>
               <button
                 onClick={() => {
@@ -746,14 +746,14 @@ const Performance: React.FC = () => {
               {/* Basic Information */}
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Employee *</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Karyawan *</label>
                   <select
                     required
                     value={reviewForm.employeeId}
                     onChange={(e) => setReviewForm({...reviewForm, employeeId: e.target.value})}
                     className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                   >
-                    <option value="">Select Employee</option>
+                    <option value="">Pilih Karyawan</option>
                     {employees.map(employee => (
                       <option key={employee.id} value={employee.id}>{employee.name}</option>
                     ))}
@@ -801,7 +801,7 @@ const Performance: React.FC = () => {
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Review Type</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Jenis Review</label>
                   <select
                     value={reviewForm.reviewPeriod.type}
                     onChange={(e) => setReviewForm({
@@ -820,7 +820,7 @@ const Performance: React.FC = () => {
 
               {/* Self Assessment */}
               <div>
-                <h4 className="text-md font-medium text-gray-900 mb-4">Self Assessment</h4>
+                <h4 className="text-md font-medium text-gray-900 mb-4">Penilaian Diri</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {Object.entries(reviewForm.selfAssessment).map(([key, value]) => (
                     <div key={key}>
@@ -848,7 +848,7 @@ const Performance: React.FC = () => {
 
               {/* Manager Assessment */}
               <div>
-                <h4 className="text-md font-medium text-gray-900 mb-4">Manager Assessment</h4>
+                <h4 className="text-md font-medium text-gray-900 mb-4">Penilaian Manajer</h4>
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {Object.entries(reviewForm.managerAssessment).map(([key, value]) => (
                     <div key={key}>

@@ -8,6 +8,8 @@ import Dashboard from './pages/Dashboard';
 import Employees from './pages/Employees';
 import AttendancePage from './pages/Attendance';
 import SalaryPage from './pages/Salary';
+import Skills from './pages/Skills';
+import Performance from './pages/Performance';
 import Settings from './pages/Settings';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -79,15 +81,7 @@ const AppRoutes: React.FC = () => {
         element={
           <ProtectedRoute>
             <Layout>
-              <div className="space-y-6">
-                <div>
-                  <h1 className="text-2xl font-semibold text-gray-900">Keterampilan Karyawan</h1>
-                  <p className="mt-1 text-sm text-gray-600">Kelola keterampilan dan kompetensi karyawan</p>
-                </div>
-                <div className="bg-white shadow rounded-lg p-6">
-                  <p className="text-gray-500">Fitur keterampilan karyawan sedang dalam pengembangan.</p>
-                </div>
-              </div>
+              <Skills />
             </Layout>
           </ProtectedRoute>
         }
@@ -97,15 +91,7 @@ const AppRoutes: React.FC = () => {
         element={
           <ProtectedRoute>
             <Layout>
-              <div className="space-y-6">
-                <div>
-                  <h1 className="text-2xl font-semibold text-gray-900">Evaluasi Performansi</h1>
-                  <p className="mt-1 text-sm text-gray-600">Penilaian dan evaluasi kinerja karyawan</p>
-                </div>
-                <div className="bg-white shadow rounded-lg p-6">
-                  <p className="text-gray-500">Fitur evaluasi performansi karyawan sedang dalam pengembangan.</p>
-                </div>
-              </div>
+              <Performance />
             </Layout>
           </ProtectedRoute>
         }

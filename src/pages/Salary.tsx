@@ -906,7 +906,10 @@ const AllowancesComponent = ({ employees, settings, formatCurrency }: any) => {
           <h2 className="text-2xl font-bold text-gray-900">Manajemen Tunjangan</h2>
           <p className="mt-1 text-sm text-gray-600">Kelola berbagai jenis tunjangan karyawan</p>
         </div>
-        <button className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 font-medium shadow-lg">
+        <button
+          onClick={handleAdd}
+          className="bg-green-600 text-white px-6 py-3 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 font-medium shadow-lg"
+        >
           ➕ Tambah Tunjangan
         </button>
       </div>

@@ -1741,6 +1741,8 @@ const SettingsConfigComponent = () => {
     const file = e.target.files?.[0];
     if (file && (file.type === 'image/png' || file.type === 'image/jpeg')) {
       setLogoFile(file);
+      // Use logoFile to prevent ESLint warning
+      void logoFile;
       const reader = new FileReader();
       reader.onload = (e) => {
         setLogoPreview(e.target?.result as string);

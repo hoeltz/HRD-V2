@@ -509,19 +509,19 @@ const Skills: React.FC = () => {
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-semibold text-gray-900">🎓 Skills & Training Management</h1>
-        <p className="mt-1 text-sm text-gray-600">Kelola skills, training records, certifications, dan skill gaps karyawan</p>
+        <h1 className="text-2xl font-semibold text-gray-900">🎓 Manajemen Keterampilan & Pelatihan</h1>
+        <p className="mt-1 text-sm text-gray-600">Kelola keterampilan, catatan pelatihan, sertifikasi, dan gap keterampilan karyawan</p>
       </div>
 
       {/* Navigation Tabs */}
       <div className="border-b border-gray-200">
         <nav className="-mb-px flex space-x-8">
           {[
-            { key: 'inventory', label: 'Skills Inventory', icon: '📋' },
-            { key: 'training', label: 'Training Records', icon: '🎓' },
-            { key: 'certifications', label: 'Certifications', icon: '🏆' },
-            { key: 'gaps', label: 'Skill Gaps', icon: '⚡' },
-            { key: 'analytics', label: 'Analytics', icon: '📊' }
+            { key: 'inventory', label: 'Inventaris Keterampilan', icon: '📋' },
+            { key: 'training', label: 'Catatan Pelatihan', icon: '🎓' },
+            { key: 'certifications', label: 'Sertifikasi', icon: '🏆' },
+            { key: 'gaps', label: 'Gap Keterampilan', icon: '⚡' },
+            { key: 'analytics', label: 'Analitik', icon: '📊' }
           ].map((tab) => (
             <button
               key={tab.key}
@@ -544,7 +544,7 @@ const Skills: React.FC = () => {
           {/* Controls */}
           <div className="bg-white shadow rounded-lg p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-medium text-gray-900">Skills Inventory</h2>
+              <h2 className="text-lg font-medium text-gray-900">Inventaris Keterampilan</h2>
               <button
                 onClick={() => {
                   resetSkillForm();
@@ -552,33 +552,33 @@ const Skills: React.FC = () => {
                 }}
                 className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
               >
-                + Add Skill
+                + Tambah Keterampilan
               </button>
             </div>
 
             {/* Filters */}
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Employee</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Karyawan</label>
                 <select
                   value={skillFilters.employee}
                   onChange={(e) => setSkillFilters({...skillFilters, employee: e.target.value})}
                   className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="">All Employees</option>
+                  <option value="">Semua Karyawan</option>
                   {employees.map(employee => (
                     <option key={employee.id} value={employee.id}>{employee.name}</option>
                   ))}
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Category</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Kategori</label>
                 <select
                   value={skillFilters.category}
                   onChange={(e) => setSkillFilters({...skillFilters, category: e.target.value})}
                   className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="">All Categories</option>
+                  <option value="">Semua Kategori</option>
                   <option value="technical">Technical</option>
                   <option value="soft">Soft Skills</option>
                   <option value="language">Language</option>
@@ -587,17 +587,17 @@ const Skills: React.FC = () => {
                 </select>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Proficiency</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Tingkat Kemahiran</label>
                 <select
                   value={skillFilters.proficiency}
                   onChange={(e) => setSkillFilters({...skillFilters, proficiency: e.target.value})}
                   className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="">All Levels</option>
-                  <option value="beginner">Beginner</option>
-                  <option value="intermediate">Intermediate</option>
-                  <option value="advanced">Advanced</option>
-                  <option value="expert">Expert</option>
+                  <option value="">Semua Level</option>
+                  <option value="beginner">Pemula</option>
+                  <option value="intermediate">Menengah</option>
+                  <option value="advanced">Mahir</option>
+                  <option value="expert">Ahli</option>
                 </select>
               </div>
               <div>
@@ -623,13 +623,13 @@ const Skills: React.FC = () => {
               <table className="min-w-full divide-y divide-gray-200">
                 <thead className="bg-gray-50">
                   <tr>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Employee</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Skill Name</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Category</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Proficiency</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Experience</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Karyawan</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Nama Keterampilan</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kategori</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Kemahiran</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Pengalaman</th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Rating</th>
-                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Aksi</th>
                   </tr>
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
@@ -682,7 +682,7 @@ const Skills: React.FC = () => {
                             onClick={() => handleDeleteSkill(skill.id)}
                             className="text-red-600 hover:text-red-900"
                           >
-                            Delete
+                            Hapus
                           </button>
                         </td>
                       </tr>
@@ -693,7 +693,7 @@ const Skills: React.FC = () => {
             </div>
             {filteredSkills.length === 0 && (
               <div className="text-center py-8">
-                <p className="text-gray-500">No skills found</p>
+                <p className="text-gray-500">Tidak ada keterampilan ditemukan</p>
               </div>
             )}
           </div>
@@ -706,7 +706,7 @@ const Skills: React.FC = () => {
           {/* Controls */}
           <div className="bg-white shadow rounded-lg p-6">
             <div className="flex justify-between items-center mb-4">
-              <h2 className="text-lg font-medium text-gray-900">Training Records</h2>
+              <h2 className="text-lg font-medium text-gray-900">Catatan Pelatihan</h2>
               <button
                 onClick={() => {
                   resetTrainingForm();
@@ -714,20 +714,20 @@ const Skills: React.FC = () => {
                 }}
                 className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700"
               >
-                + Add Training
+                + Tambah Pelatihan
               </button>
             </div>
 
             {/* Filters */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Employee</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Karyawan</label>
                 <select
                   value={trainingFilters.employee}
                   onChange={(e) => setTrainingFilters({...trainingFilters, employee: e.target.value})}
                   className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="">All Employees</option>
+                  <option value="">Semua Karyawan</option>
                   {employees.map(employee => (
                     <option key={employee.id} value={employee.id}>{employee.name}</option>
                   ))}
@@ -836,7 +836,7 @@ const Skills: React.FC = () => {
             </div>
             {filteredTraining.length === 0 && (
               <div className="text-center py-8">
-                <p className="text-gray-500">No training records found</p>
+                <p className="text-gray-500">Tidak ada catatan pelatihan ditemukan</p>
               </div>
             )}
           </div>
@@ -864,13 +864,13 @@ const Skills: React.FC = () => {
             {/* Filters */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Employee</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Karyawan</label>
                 <select
                   value={certificationFilters.employee}
                   onChange={(e) => setCertificationFilters({...certificationFilters, employee: e.target.value})}
                   className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="">All Employees</option>
+                  <option value="">Semua Karyawan</option>
                   {employees.map(employee => (
                     <option key={employee.id} value={employee.id}>{employee.name}</option>
                   ))}
@@ -979,7 +979,7 @@ const Skills: React.FC = () => {
             </div>
             {filteredCertifications.length === 0 && (
               <div className="text-center py-8">
-                <p className="text-gray-500">No certifications found</p>
+                <p className="text-gray-500">Tidak ada sertifikasi ditemukan</p>
               </div>
             )}
           </div>
@@ -1007,13 +1007,13 @@ const Skills: React.FC = () => {
             {/* Filters */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Employee</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Karyawan</label>
                 <select
                   value={gapFilters.employee}
                   onChange={(e) => setGapFilters({...gapFilters, employee: e.target.value})}
                   className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
                 >
-                  <option value="">All Employees</option>
+                  <option value="">Semua Karyawan</option>
                   {employees.map(employee => (
                     <option key={employee.id} value={employee.id}>{employee.name}</option>
                   ))}
@@ -1134,7 +1134,7 @@ const Skills: React.FC = () => {
             </div>
             {filteredGaps.length === 0 && (
               <div className="text-center py-8">
-                <p className="text-gray-500">No skill gaps found</p>
+                <p className="text-gray-500">Tidak ada gap keterampilan ditemukan</p>
               </div>
             )}
           </div>
