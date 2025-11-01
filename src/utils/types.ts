@@ -329,3 +329,157 @@ export interface BonusConfig {
   criteria?: string;
   frequency: 'monthly' | 'quarterly' | 'annual' | 'on-demand';
 }
+
+// Performance Management Types
+export interface PerformanceReview {
+  id: string;
+  employeeId: string;
+  reviewerName: string;
+  reviewPeriod: {
+    startDate: string;
+    endDate: string;
+    type: 'quarterly' | 'annual' | 'project-based' | 'mid-year';
+  };
+  overallRating: 1 | 2 | 3 | 4 | 5;
+  selfAssessment: {
+    communication: 1 | 2 | 3 | 4 | 5;
+    teamwork: 1 | 2 | 3 | 4 | 5;
+    leadership: 1 | 2 | 3 | 4 | 5;
+    problemSolving: 1 | 2 | 3 | 4 | 5;
+    productivity: 1 | 2 | 3 | 4 | 5;
+    quality: 1 | 2 | 3 | 4 | 5;
+    initiative: 1 | 2 | 3 | 4 | 5;
+    adaptability: 1 | 2 | 3 | 4 | 5;
+  };
+  managerAssessment: {
+    communication: 1 | 2 | 3 | 4 | 5;
+    teamwork: 1 | 2 | 3 | 4 | 5;
+    leadership: 1 | 2 | 3 | 4 | 5;
+    problemSolving: 1 | 2 | 3 | 4 | 5;
+    productivity: 1 | 2 | 3 | 4 | 5;
+    quality: 1 | 2 | 3 | 4 | 5;
+    initiative: 1 | 2 | 3 | 4 | 5;
+    adaptability: 1 | 2 | 3 | 4 | 5;
+  };
+  keyAchievements: string[];
+  areasForImprovement: string[];
+  goalsForNextPeriod: string[];
+  comments: string;
+  actionItems: ActionItem[];
+  status: 'draft' | 'in-review' | 'completed' | 'archived';
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface ActionItem {
+  id: string;
+  description: string;
+  assignedTo: string;
+  dueDate: string;
+  status: 'pending' | 'in-progress' | 'completed';
+  priority: 'low' | 'medium' | 'high';
+  notes?: string;
+}
+
+export interface SmartGoal {
+  id: string;
+  employeeId: string;
+  title: string;
+  description: string;
+  specific: string;
+  measurable: string;
+  achievable: string;
+  relevant: string;
+  timeBound: string;
+  targetCompletionDate: string;
+  progress: number; // 0-100
+  priority: 'low' | 'medium' | 'high';
+  status: 'not-started' | 'in-progress' | 'completed' | 'on-hold' | 'cancelled';
+  keyMilestones: string[];
+  successCriteria: string;
+  assignedBy: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Skills Management Types (Enhanced)
+export interface EnhancedSkill {
+  id: string;
+  employeeId: string;
+  skillName: string;
+  category: 'technical' | 'soft' | 'language' | 'license' | 'certification';
+  proficiencyLevel: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+  yearsOfExperience: number;
+  lastUsedDate?: string;
+  certificationStatus?: 'none' | 'in-progress' | 'certified' | 'expired';
+  certificationExpiry?: string;
+  skillSource: 'self-assessment' | 'training' | 'work-experience' | 'formal-education';
+  proofOfCompetency?: string; // URL or description
+  notes?: string;
+  rating: 1 | 2 | 3 | 4 | 5; // Self-assessment rating
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SkillCategory {
+  id: string;
+  name: string;
+  description: string;
+  skills: string[]; // List of skill names in this category
+}
+
+export interface TrainingRecord {
+  id: string;
+  employeeId: string;
+  trainingName: string;
+  provider: string;
+  trainingType: 'internal' | 'external' | 'online' | 'workshop' | 'conference';
+  duration: {
+    hours?: number;
+    days?: number;
+    weeks?: number;
+  };
+  completionDate?: string;
+  status: 'planned' | 'in-progress' | 'completed' | 'cancelled';
+  outcome?: string;
+  score?: number;
+  certificateReceived: boolean;
+  certificateNumber?: string;
+  cost?: number;
+  nextTrainingNeeded?: string;
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Certification {
+  id: string;
+  employeeId: string;
+  certificationName: string;
+  issuingOrganization: string;
+  certificationType: 'professional' | 'technical' | 'language' | 'safety' | 'compliance';
+  issueDate: string;
+  expiryDate?: string;
+  certificateNumber?: string;
+  status: 'active' | 'expired' | 'expiring-soon' | 'renewal-required';
+  renewalCost?: number;
+  fileUrl?: string; // URL to uploaded certificate
+  notes?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface SkillGap {
+  id: string;
+  employeeId: string;
+  skillRequired: string;
+  currentLevel: 'none' | 'beginner' | 'intermediate' | 'advanced' | 'expert';
+  requiredLevel: 'beginner' | 'intermediate' | 'advanced' | 'expert';
+  gapPercentage: number;
+  priority: 'low' | 'medium' | 'high' | 'critical';
+  recommendedActions: string[];
+  targetCompletionDate?: string;
+  status: 'identified' | 'in-progress' | 'addressed';
+  createdAt: string;
+  updatedAt: string;
+}
