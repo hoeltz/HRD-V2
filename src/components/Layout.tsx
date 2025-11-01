@@ -72,12 +72,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
                 )}
                 <h1 className="text-xl font-bold text-gray-900">{settings.appName}</h1>
               </div>
-            <nav className="mt-5 px-2 space-y-1">
+            <nav className="mt-10 px-4 space-y-3">
               {navigation.map((item) => (
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`group flex items-center px-2 py-2 text-base font-medium rounded-md ${
+                  className={`group flex items-center px-3 py-3 text-base font-medium rounded-md ${
                     item.current
                       ? 'bg-gray-100 text-gray-900'
                       : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
@@ -95,7 +95,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               className="flex-shrink-0 group block"
             >
               <div className="flex items-center">
-                <div className="ml-3">
+                <div className="ml-3 flex items-center">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
                   <p className="text-sm font-medium text-gray-700 group-hover:text-gray-900">
                     Keluar
                   </p>
@@ -124,12 +127,12 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               )}
               <h1 className="text-xl font-bold text-black">{settings.appName}</h1>
             </div>
-            <nav className="mt-5 flex-1 px-2 space-y-1">
+            <nav className="mt-10 flex-1 px-4 space-y-3">
               {navigation.map((item) => (
                 <Link
                   key={item.name}
                   to={item.href}
-                  className={`group flex items-center px-2 py-2 text-sm font-medium rounded-md ${
+                  className={`group flex items-center px-3 py-3 text-sm font-medium rounded-md ${
                     item.current
                       ? 'bg-white/20 text-black border-l-4 border-black'
                       : 'text-black/80 hover:bg-white/10 hover:text-black'
@@ -146,7 +149,10 @@ const Layout: React.FC<LayoutProps> = ({ children }) => {
               className="flex-shrink-0 w-full group block"
             >
               <div className="flex items-center">
-                <div className="ml-3">
+                <div className="ml-3 flex items-center">
+                  <svg className="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                  </svg>
                   <p className="text-sm font-medium text-black group-hover:text-black/80">
                     Keluar
                   </p>
