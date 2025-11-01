@@ -12,7 +12,7 @@ const Settings: React.FC = () => {
     email: '',
     phone: '',
   });
-  const [appName, setAppName] = useState(settings.appName);
+  const [appName, setAppName] = useState(settings?.appName || 'My Office HRD');
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
     newPassword: '',
@@ -20,7 +20,23 @@ const Settings: React.FC = () => {
   });
   
   // Salary slip label customization
-  const [salaryLabels, setSalaryLabels] = useState(settings.salarySlipLabels);
+  const [salaryLabels, setSalaryLabels] = useState(settings?.salarySlipLabels || {
+    headerTitle: 'SLIP GAJI',
+    companyName: 'My Office HRD',
+    footerText: 'Terima kasih atas dedikasi Anda',
+    fieldNames: {
+      employeeName: 'Nama Karyawan',
+      employeeId: 'ID Karyawan',
+      position: 'Posisi',
+      department: 'Departemen',
+      baseSalary: 'Gaji Pokok',
+      allowances: 'Tunjangan',
+      deductions: 'Potongan',
+      grossSalary: 'Gaji Bruto',
+      netSalary: 'Gaji Bersih',
+      period: 'Periode'
+    }
+  });
 
   useEffect(() => {
     // Load notification settings
@@ -37,7 +53,9 @@ const Settings: React.FC = () => {
     }
     
     // Initialize salary labels from settings
-    setSalaryLabels(settings.salarySlipLabels);
+    if (settings?.salarySlipLabels) {
+      setSalaryLabels(settings.salarySlipLabels);
+    }
   }, [user, settings]);
 
   const handleAppNameChange = (e: React.FormEvent) => {
