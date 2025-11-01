@@ -1,28 +1,56 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { getFromStorage, setToStorage } from '../utils/storage';
-import { Attendance, Employee } from '../utils/types';
+import { Attendance, Employee, Leave, Permission, AttendanceRecord } from '../utils/types';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+  ChartOptions
+} from 'chart.js';
+import { Line } from 'react-chartjs-2';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler
+);
 
 const AttendancePage: React.FC = () => {
   const [activeTab, setActiveTab] = useState('daily-attendance');
   const [employees, setEmployees] = useState<Employee[]>([]);
   const [attendance, setAttendance] = useState<Attendance[]>([]);
+  const [leaves, setLeaves] = useState<Leave[]>([]);
+  const [permissions, setPermissions] = useState<Permission[]>([]);
   const [selectedEmployee, setSelectedEmployee] = useState('');
-  const [currentAttendance, setCurrentAttendance] = useState<Attendance | null>(null);
-  const [selectedMonth, setSelectedMonth] = useState(new Date().toISOString().slice(0, 7));
 
   const tabs = [
     { id: 'daily-attendance', name: 'Absensi Harian', icon: '📅' },
-    { id: 'reports-analytics', name: 'Laporan & Analisis', icon: '📊' },
+    { id: 'detailed-reports', name: 'Detail Laporan', icon: '📊' },
+    { id: 'attendance-charts', name: 'Grafik Tracking', icon: '📈' },
+    { id: 'leave-permission', name: 'Cuti & Izin', icon: '📋' },
     { id: 'settings-config', name: 'Pengaturan', icon: '⚙️' },
-    { id: 'leave-management', name: 'Cuti & Izin', icon: '📋' },
-    { id: 'overtime-management', name: 'Lembur', icon: '⏰' },
   ];
 
   const loadData = () => {
     const employeesData = getFromStorage('employees') || [];
     const attendanceData = getFromStorage('attendance') || [];
+    const leavesData = getFromStorage('leaves') || [];
+    const permissionsData = getFromStorage('permissions') || [];
     setEmployees(employeesData);
     setAttendance(attendanceData);
+    setLeaves(leavesData);
+    setPermissions(permissionsData);
   };
 
   const checkCurrentAttendance = useCallback(() => {
@@ -32,7 +60,7 @@ const AttendancePage: React.FC = () => {
     const todayAttendance = attendance.find(
       att => att.employeeId === selectedEmployee && att.date === today
     );
-    setCurrentAttendance(todayAttendance || null);
+    return todayAttendance || null;
   }, [selectedEmployee, attendance]);
 
   const handleCheckIn = () => {
@@ -54,7 +82,6 @@ const AttendancePage: React.FC = () => {
     const updatedAttendance = [...attendance, newAttendance];
     setAttendance(updatedAttendance);
     setToStorage('attendance', updatedAttendance);
-    setCurrentAttendance(newAttendance);
 
     // Request notification permission and show notification
     if ('Notification' in window && Notification.permission === 'granted') {
@@ -66,6 +93,7 @@ const AttendancePage: React.FC = () => {
   };
 
   const handleCheckOut = () => {
+    const currentAttendance = checkCurrentAttendance();
     if (!currentAttendance) return;
 
     const now = new Date();
@@ -82,7 +110,6 @@ const AttendancePage: React.FC = () => {
 
     setAttendance(updatedAttendance);
     setToStorage('attendance', updatedAttendance);
-    setCurrentAttendance({ ...currentAttendance, checkOut: time, hoursWorked: Math.round(hoursWorked * 100) / 100 });
 
     // Show notification
     if ('Notification' in window && Notification.permission === 'granted') {
@@ -103,36 +130,95 @@ const AttendancePage: React.FC = () => {
     loadData();
   }, []);
 
-  useEffect(() => {
-    checkCurrentAttendance();
-  }, [checkCurrentAttendance]);
-
-  const getMonthlyAttendance = () => {
-    const [year, month] = selectedMonth.split('-');
-    return attendance.filter(att => {
-      const attDate = new Date(att.date);
-      return attDate.getFullYear() === parseInt(year) && attDate.getMonth() === parseInt(month) - 1;
-    });
-  };
-
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('id-ID', { style: 'currency', currency: 'IDR' }).format(amount);
   };
 
-  const getMonthName = (month: string) => {
-    const months = [
-      'Januari', 'Februari', 'Maret', 'April', 'Mei', 'Juni',
-      'Juli', 'Agustus', 'September', 'Oktober', 'November', 'Desember'
-    ];
-    const [year, monthNum] = month.split('-');
-    return `${months[parseInt(monthNum) - 1]} ${year}`;
-  };
+  // Combined attendance records for comprehensive reporting
+  const getCombinedAttendanceRecords = useCallback((startDate: string, endDate: string): AttendanceRecord[] => {
+    const records: AttendanceRecord[] = [];
+    
+    // Add attendance records
+    attendance
+      .filter(att => att.date >= startDate && att.date <= endDate)
+      .forEach(att => {
+        records.push({
+          id: att.id,
+          employeeId: att.employeeId,
+          date: att.date,
+          type: 'attendance',
+          checkIn: att.checkIn,
+          checkOut: att.checkOut,
+          hoursWorked: att.hoursWorked,
+          status: att.status,
+          createdAt: new Date().toISOString(),
+          updatedAt: new Date().toISOString()
+        });
+      });
+
+    // Add leave records
+    leaves
+      .filter(leave => leave.startDate >= startDate && leave.startDate <= endDate)
+      .forEach(leave => {
+        const daysInRange = Math.ceil((new Date(leave.endDate).getTime() - new Date(leave.startDate).getTime()) / (1000 * 60 * 60 * 24)) + 1;
+        
+        for (let i = 0; i < daysInRange; i++) {
+          const currentDate = new Date(new Date(leave.startDate).getTime() + (i * 24 * 60 * 60 * 1000));
+          const dateStr = currentDate.toISOString().split('T')[0];
+          
+          if (dateStr >= startDate && dateStr <= endDate) {
+            records.push({
+              id: `${leave.id}-${dateStr}`,
+              employeeId: leave.employeeId,
+              date: dateStr,
+              type: 'leave',
+              leaveId: leave.id,
+              leaveType: leave.type,
+              leaveStatus: leave.status,
+              reason: leave.reason,
+              approvedBy: leave.approvedBy,
+              createdAt: leave.createdAt || new Date().toISOString(),
+              updatedAt: leave.updatedAt || new Date().toISOString()
+            });
+          }
+        }
+      });
+
+    // Add permission records
+    permissions
+      .filter(perm => perm.date >= startDate && perm.date <= endDate)
+      .forEach(perm => {
+        records.push({
+          id: perm.id,
+          employeeId: perm.employeeId,
+          date: perm.date,
+          type: 'permission',
+          permissionId: perm.id,
+          permissionType: perm.type,
+          permissionStatus: perm.status,
+          permissionStartTime: perm.startTime,
+          permissionEndTime: perm.endTime,
+          reason: perm.reason,
+          approvedBy: perm.approvedBy,
+          createdAt: perm.createdAt || new Date().toISOString(),
+          updatedAt: perm.updatedAt || new Date().toISOString()
+        });
+      });
+
+    // Sort by date and employee
+    return records.sort((a, b) => {
+      if (a.date === b.date) {
+        return a.employeeId.localeCompare(b.employeeId);
+      }
+      return a.date.localeCompare(b.date);
+    });
+  }, [attendance, leaves, permissions]);
 
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-gray-900">🎯 Manajemen Absensi</h1>
-        <p className="mt-1 text-sm text-gray-600">Kelola absensi karyawan dengan fitur lengkap</p>
+        <p className="mt-1 text-sm text-gray-600">Sistem absensi comprehensive dengan tracking, laporan, dan approval</p>
       </div>
 
       {/* Tab Navigation */}
@@ -163,37 +249,43 @@ const AttendancePage: React.FC = () => {
             attendance={attendance}
             selectedEmployee={selectedEmployee}
             setSelectedEmployee={setSelectedEmployee}
-            currentAttendance={currentAttendance}
+            checkCurrentAttendance={checkCurrentAttendance}
             handleCheckIn={handleCheckIn}
             handleCheckOut={handleCheckOut}
             requestNotificationPermission={requestNotificationPermission}
           />
         )}
-        {activeTab === 'reports-analytics' && (
-          <ReportsAnalyticsComponent
+        {activeTab === 'detailed-reports' && (
+          <DetailedReportsComponent
             employees={employees}
             attendance={attendance}
-            selectedMonth={selectedMonth}
-            setSelectedMonth={setSelectedMonth}
+            leaves={leaves}
+            permissions={permissions}
+            getCombinedAttendanceRecords={getCombinedAttendanceRecords}
             formatCurrency={formatCurrency}
-            getMonthName={getMonthName}
+          />
+        )}
+        {activeTab === 'attendance-charts' && (
+          <AttendanceChartsComponent
+            employees={employees}
+            attendance={attendance}
+            leaves={leaves}
+            permissions={permissions}
+            getCombinedAttendanceRecords={getCombinedAttendanceRecords}
+          />
+        )}
+        {activeTab === 'leave-permission' && (
+          <LeavePermissionComponent
+            employees={employees}
+            leaves={leaves}
+            permissions={permissions}
+            setLeaves={setLeaves}
+            setPermissions={setPermissions}
+            formatCurrency={formatCurrency}
           />
         )}
         {activeTab === 'settings-config' && (
           <SettingsConfigComponent />
-        )}
-        {activeTab === 'leave-management' && (
-          <LeaveManagementComponent
-            employees={employees}
-            formatCurrency={formatCurrency}
-          />
-        )}
-        {activeTab === 'overtime-management' && (
-          <OvertimeManagementComponent
-            employees={employees}
-            attendance={attendance}
-            formatCurrency={formatCurrency}
-          />
         )}
       </div>
     </div>
@@ -203,9 +295,8 @@ const AttendancePage: React.FC = () => {
 // Daily Attendance Component with Enhanced Features
 const DailyAttendanceComponent = ({
   employees, attendance, selectedEmployee, setSelectedEmployee,
-  currentAttendance, handleCheckIn, handleCheckOut, requestNotificationPermission
+  checkCurrentAttendance, handleCheckIn, handleCheckOut, requestNotificationPermission
 }: any) => {
-  const [showBulkForm, setShowBulkForm] = useState(false);
   const [location, setLocation] = useState<{lat: number, lng: number} | null>(null);
   const [selectedPhoto, setSelectedPhoto] = useState<string | null>(null);
 
@@ -229,20 +320,16 @@ const DailyAttendanceComponent = ({
     setSelectedPhoto('data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg==');
   };
 
+  const currentAttendance = checkCurrentAttendance();
+
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">📅 Absensi Harian</h2>
-          <p className="mt-1 text-sm text-gray-600">Check-in/Check-out dengan fitur geolocation & camera</p>
+          <p className="mt-1 text-sm text-gray-600">Check-in/Check-out dengan verifikasi geo-location & camera</p>
         </div>
         <div className="flex space-x-3">
-          <button 
-            onClick={() => setShowBulkForm(!showBulkForm)}
-            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 font-medium"
-          >
-            👥 Bulk Attendance
-          </button>
           <button 
             onClick={requestNotificationPermission}
             className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 font-medium"
@@ -392,180 +479,153 @@ const DailyAttendanceComponent = ({
           </div>
         )}
       </div>
-
-      {/* Bulk Attendance Form */}
-      {showBulkForm && (
-        <div className="bg-white shadow rounded-lg p-6">
-          <h3 className="text-lg font-medium text-gray-900 mb-4">👥 Bulk Attendance Entry</h3>
-          <p className="text-sm text-gray-600 mb-4">Input absensi untuk multiple karyawan sekaligus</p>
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p className="text-sm text-yellow-800">⚠️ Fitur Bulk Attendance sedang dalam pengembangan. Coming Soon!</p>
-          </div>
-        </div>
-      )}
     </div>
   );
 };
 
-// Reports & Analytics Component
-const ReportsAnalyticsComponent = ({
-  employees, attendance, selectedMonth, setSelectedMonth,
-  formatCurrency, getMonthName
+// Detailed Reports Component with Comprehensive Tables
+const DetailedReportsComponent = ({
+  employees, attendance, leaves, permissions, getCombinedAttendanceRecords,
+  formatCurrency
 }: any) => {
-  const [dateRange, setDateRange] = useState({
-    start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-    end: new Date().toISOString().split('T')[0]
-  });
+  const [selectedPeriod, setSelectedPeriod] = useState('current-month');
+  const [selectedEmployee, setSelectedEmployee] = useState('');
 
-  const getFilteredAttendance = () => {
-    return attendance.filter((att: Attendance) => {
-      const attDate = new Date(att.date);
-      return attDate >= new Date(dateRange.start) && attDate <= new Date(dateRange.end);
-    });
-  };
-
-  const getAttendanceStats = () => {
-    const filtered = getFilteredAttendance();
-    const total = filtered.length;
-    const present = filtered.filter((att: Attendance) => att.status === 'present').length;
-    const late = filtered.filter((att: Attendance) => att.status === 'late').length;
-    const absent = filtered.filter((att: Attendance) => att.status === 'absent').length;
+  const getDateRange = () => {
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
     
-    return {
-      total,
-      present,
-      late,
-      absent,
-      attendanceRate: total > 0 ? ((present + late) / total * 100).toFixed(1) : '0.0'
-    };
+    switch (selectedPeriod) {
+      case 'today':
+        return { start: today, end: today };
+      case 'last-7-days':
+        const lastWeek = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        return { start: lastWeek, end: today };
+      case 'current-month':
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+        return { start: firstDayOfMonth, end: today };
+      case 'last-month':
+        const firstDayOfLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString().split('T')[0];
+        const lastDayOfLastMonth = new Date(now.getFullYear(), now.getMonth(), 0).toISOString().split('T')[0];
+        return { start: firstDayOfLastMonth, end: lastDayOfLastMonth };
+      default:
+        return { start: today, end: today };
+    }
   };
 
-  const stats = getAttendanceStats();
+  const dateRange = getDateRange();
+  const records = getCombinedAttendanceRecords(dateRange.start, dateRange.end);
+
+  const getStatusIcon = (record: AttendanceRecord) => {
+    switch (record.type) {
+      case 'attendance':
+        if (record.status === 'present') return '✅';
+        if (record.status === 'late') return '⏰';
+        return '❌';
+      case 'leave':
+        return '🏖️';
+      case 'permission':
+        return '📋';
+      default:
+        return '❓';
+    }
+  };
+
+  const getStatusColor = (record: AttendanceRecord) => {
+    switch (record.type) {
+      case 'attendance':
+        if (record.status === 'present') return 'bg-green-100 text-green-800';
+        if (record.status === 'late') return 'bg-yellow-100 text-yellow-800';
+        return 'bg-red-100 text-red-800';
+      case 'leave':
+        return record.leaveStatus === 'approved' ? 'bg-blue-100 text-blue-800' : 
+               record.leaveStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800';
+      case 'permission':
+        return record.permissionStatus === 'approved' ? 'bg-purple-100 text-purple-800' : 
+               record.permissionStatus === 'pending' ? 'bg-yellow-100 text-yellow-800' : 'bg-red-100 text-red-800';
+      default:
+        return 'bg-gray-100 text-gray-800';
+    }
+  };
+
+  const getStatusText = (record: AttendanceRecord) => {
+    switch (record.type) {
+      case 'attendance':
+        return record.status === 'present' ? 'Hadir' : 
+               record.status === 'late' ? 'Terlambat' : 'Tidak Hadir';
+      case 'leave':
+        const leaveTypes = {
+          'annual': 'Cuti Tahunan',
+          'sick': 'Cuti Sakit',
+          'personal': 'Cuti Personal',
+          'maternity': 'Cuti Melahirkan',
+          'paternity': 'Cuti Ayah',
+          'emergency': 'Cuti Darurat'
+        };
+        return `${leaveTypes[record.leaveType as keyof typeof leaveTypes] || 'Cuti'} (${record.leaveStatus})`;
+      case 'permission':
+        const permissionTypes = {
+          'urgent': 'Ijin Mendesak',
+          'appointment': 'Ijin Janji',
+          'personal': 'Ijin Pribadi',
+          'family': 'Ijin Keluarga',
+          'health': 'Ijin Kesehatan'
+        };
+        return `${permissionTypes[record.permissionType as keyof typeof permissionTypes] || 'Ijin'} (${record.permissionStatus})`;
+      default:
+        return 'Unknown';
+    }
+  };
 
   return (
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold text-gray-900">📊 Laporan & Analisis</h2>
-          <p className="mt-1 text-sm text-gray-600">Dashboard lengkap absensi dengan charts dan export</p>
+          <h2 className="text-2xl font-bold text-gray-900">📊 Detail Laporan</h2>
+          <p className="mt-1 text-sm text-gray-600">Comprehensive tracking absensi, cuti, dan ijin</p>
         </div>
         <div className="flex space-x-3">
-          <button className="bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500">
-            📄 Export PDF
-          </button>
-          <button className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
-            📊 Export Excel
-          </button>
+          <select
+            value={selectedPeriod}
+            onChange={(e) => setSelectedPeriod(e.target.value)}
+            className="border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="today">Hari Ini</option>
+            <option value="last-7-days">7 Hari Terakhir</option>
+            <option value="current-month">Bulan Ini</option>
+            <option value="last-month">Bulan Lalu</option>
+          </select>
         </div>
       </div>
 
-      {/* Date Range Filter */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">📅 Filter Rentang Tanggal</h3>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Dari</label>
-            <input
-              type="date"
-              className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              value={dateRange.start}
-              onChange={(e) => setDateRange({...dateRange, start: e.target.value})}
-            />
-          </div>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">Sampai</label>
-            <input
-              type="date"
-              className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-              value={dateRange.end}
-              onChange={(e) => setDateRange({...dateRange, end: e.target.value})}
-            />
-          </div>
-          <div className="flex items-end">
-            <button 
-              onClick={() => setDateRange({
-                start: new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0],
-                end: new Date().toISOString().split('T')[0]
-              })}
-              className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
-            >
-              🔄 Reset
-            </button>
-          </div>
+      {/* Employee Filter */}
+      <div className="bg-white shadow rounded-lg p-4">
+        <div className="flex items-center space-x-4">
+          <label className="text-sm font-medium text-gray-700">Filter Karyawan:</label>
+          <select
+            value={selectedEmployee}
+            onChange={(e) => setSelectedEmployee(e.target.value)}
+            className="border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="">Semua Karyawan</option>
+            {employees.filter((emp: Employee) => emp.status === 'active').map((employee: Employee) => (
+              <option key={employee.id} value={employee.id}>
+                {employee.name} - {employee.position}
+              </option>
+            ))}
+          </select>
         </div>
       </div>
 
-      {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <span className="text-green-600 text-2xl">✅</span>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Total Hadir</dt>
-                  <dd className="text-lg font-medium text-gray-900">{stats.present}</dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <span className="text-yellow-600 text-2xl">⏰</span>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Telat</dt>
-                  <dd className="text-lg font-medium text-gray-900">{stats.late}</dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <span className="text-red-600 text-2xl">❌</span>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Tidak Hadir</dt>
-                  <dd className="text-lg font-medium text-gray-900">{stats.absent}</dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-white overflow-hidden shadow rounded-lg">
-          <div className="p-5">
-            <div className="flex items-center">
-              <div className="flex-shrink-0">
-                <span className="text-blue-600 text-2xl">📈</span>
-              </div>
-              <div className="ml-5 w-0 flex-1">
-                <dl>
-                  <dt className="text-sm font-medium text-gray-500 truncate">Attendance Rate</dt>
-                  <dd className="text-lg font-medium text-gray-900">{stats.attendanceRate}%</dd>
-                </dl>
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* Monthly Attendance Table */}
+      {/* Combined Records Table */}
       <div className="bg-white shadow rounded-lg">
         <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">📋 Detail Absensi</h3>
+          <h3 className="text-lg font-medium text-gray-900">
+            📋 Detail Absensi, Cuti & Izin 
+            <span className="text-sm text-gray-500 ml-2">
+              ({dateRange.start} s/d {dateRange.end})
+            </span>
+          </h3>
         </div>
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-gray-200">
@@ -578,62 +638,1063 @@ const ReportsAnalyticsComponent = ({
                   Tanggal
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Check-in
+                  Status
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Check-out
+                  Check-in/Out
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Jam Kerja
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Status
+                  Alasan/Keterangan
+                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  Approved By
                 </th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {getFilteredAttendance().map((att: Attendance) => {
-                const employee = employees.find((emp: Employee) => emp.id === att.employeeId);
-                return (
-                  <tr key={att.id}>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                      {employee?.name}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {new Date(att.date).toLocaleDateString('id-ID')}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {att.checkIn}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {att.checkOut || '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                      {att.hoursWorked > 0 ? `${att.hoursWorked} jam` : '-'}
-                    </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <span className={`inline-flex px-2 py-1 text-xs font-semibold rounded-full ${
-                        att.status === 'present'
-                          ? 'bg-green-100 text-green-800'
-                          : att.status === 'late'
-                          ? 'bg-yellow-100 text-yellow-800'
-                          : 'bg-red-100 text-red-800'
-                      }`}>
-                        {att.status === 'present' ? 'Hadir' : att.status === 'late' ? 'Terlambat' : 'Tidak Hadir'}
-                      </span>
-                    </td>
-                  </tr>
-                );
-              })}
+              {records
+                .filter((record: AttendanceRecord) => !selectedEmployee || record.employeeId === selectedEmployee)
+                .map((record: AttendanceRecord) => {
+                  const employee = employees.find((emp: Employee) => emp.id === record.employeeId);
+                  return (
+                    <tr key={record.id} className="hover:bg-gray-50">
+                      <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                        {employee?.name || 'Unknown'}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {new Date(record.date).toLocaleDateString('id-ID')}
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap">
+                        <span className={`inline-flex items-center px-2 py-1 text-xs font-semibold rounded-full ${getStatusColor(record)}`}>
+                          <span className="mr-1">{getStatusIcon(record)}</span>
+                          {getStatusText(record)}
+                        </span>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {record.checkIn && record.checkOut ? 
+                          `${record.checkIn} - ${record.checkOut}` : 
+                          record.checkIn ? record.checkIn :
+                          record.permissionStartTime && record.permissionEndTime ?
+                          `${record.permissionStartTime} - ${record.permissionEndTime}` : '-'
+                        }
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {record.hoursWorked ? `${record.hoursWorked} jam` : '-'}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-gray-500 max-w-xs">
+                        <div className="truncate" title={record.reason}>
+                          {record.reason || '-'}
+                        </div>
+                      </td>
+                      <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                        {record.approvedBy || '-'}
+                      </td>
+                    </tr>
+                  );
+                })}
             </tbody>
           </table>
         </div>
 
-        {getFilteredAttendance().length === 0 && (
+        {records.length === 0 && (
           <div className="text-center py-8">
-            <p className="text-gray-500">Tidak ada data absensi untuk rentang tanggal ini</p>
+            <p className="text-gray-500">Tidak ada data untuk periode yang dipilih</p>
           </div>
         )}
+      </div>
+
+      {/* Summary Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <span className="text-green-600 text-2xl">✅</span>
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Total Hadir</dt>
+                  <dd className="text-lg font-medium text-gray-900">
+                    {records.filter((r: AttendanceRecord) => r.type === 'attendance' && r.status === 'present').length}
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <span className="text-blue-600 text-2xl">🏖️</span>
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Total Cuti</dt>
+                  <dd className="text-lg font-medium text-gray-900">
+                    {records.filter((r: AttendanceRecord) => r.type === 'leave').length}
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <span className="text-purple-600 text-2xl">📋</span>
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Total Izin</dt>
+                  <dd className="text-lg font-medium text-gray-900">
+                    {records.filter((r: AttendanceRecord) => r.type === 'permission').length}
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <span className="text-orange-600 text-2xl">📊</span>
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Attendance Rate</dt>
+                  <dd className="text-lg font-medium text-gray-900">
+                    {(() => {
+                      const totalDays = records.length;
+                      const presentDays = records.filter((r: AttendanceRecord) => r.type === 'attendance' && r.status === 'present').length;
+                      return totalDays > 0 ? ((presentDays / totalDays) * 100).toFixed(1) : '0.0';
+                    })()}%
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Attendance Charts Component with Line Charts
+const AttendanceChartsComponent = ({
+  employees, attendance, leaves, permissions, getCombinedAttendanceRecords
+}: any) => {
+  const [selectedPeriod, setSelectedPeriod] = useState('current-month');
+
+  const getDateRange = () => {
+    const now = new Date();
+    const today = now.toISOString().split('T')[0];
+    
+    switch (selectedPeriod) {
+      case 'last-7-days':
+        const weekStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        return { start: weekStart, end: today };
+      case 'last-30-days':
+        const monthStart = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        return { start: monthStart, end: today };
+      case 'current-month':
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().split('T')[0];
+        return { start: firstDayOfMonth, end: today };
+      default:
+        const defaultStart = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+        return { start: defaultStart, end: today };
+    }
+  };
+
+  const dateRange = getDateRange();
+  const records = getCombinedAttendanceRecords(dateRange.start, dateRange.end);
+
+  const getChartData = () => {
+    const dates = [];
+    const startDate = new Date(dateRange.start);
+    const endDate = new Date(dateRange.end);
+    
+    for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+      dates.push(new Date(d));
+    }
+
+    const labels = dates.map(date => 
+      date.toLocaleDateString('id-ID', { day: '2-digit', month: '2-digit' })
+    );
+
+    const totalEmployees = employees.filter((emp: Employee) => emp.status === 'active').length;
+    const presentData = dates.map(date => {
+      const dateStr = date.toISOString().split('T')[0];
+      return records.filter((r: AttendanceRecord) => 
+        r.date === dateStr && r.type === 'attendance' && r.status === 'present'
+      ).length;
+    });
+
+    const absentData = dates.map(date => {
+      const dateStr = date.toISOString().split('T')[0];
+      return totalEmployees - records.filter((r: AttendanceRecord) => 
+        r.date === dateStr && (r.type === 'attendance' || r.type === 'leave' || r.type === 'permission')
+      ).length;
+    });
+
+    return {
+      labels,
+      datasets: [
+        {
+          label: 'Total Karyawan',
+          data: dates.map(() => totalEmployees),
+          borderColor: 'rgb(99, 102, 241)',
+          backgroundColor: 'rgba(99, 102, 241, 0.1)',
+          borderWidth: 2,
+          fill: false,
+          tension: 0.4,
+        },
+        {
+          label: 'Absensi Hadir',
+          data: presentData,
+          borderColor: 'rgb(34, 197, 94)',
+          backgroundColor: 'rgba(34, 197, 94, 0.1)',
+          borderWidth: 3,
+          fill: false,
+          tension: 0.4,
+        },
+        {
+          label: 'Tidak Hadir',
+          data: absentData,
+          borderColor: 'rgb(239, 68, 68)',
+          backgroundColor: 'rgba(239, 68, 68, 0.1)',
+          borderWidth: 3,
+          fill: false,
+          tension: 0.4,
+        }
+      ]
+    };
+  };
+
+  const chartData = getChartData();
+
+  const chartOptions: ChartOptions<'line'> = {
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top' as const,
+      },
+      title: {
+        display: true,
+        text: '📈 Komparasi Absensi Harian',
+        font: {
+          size: 16,
+          weight: 'bold' as const
+        }
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Jumlah Karyawan'
+        }
+      },
+      x: {
+        title: {
+          display: true,
+          text: 'Tanggal'
+        }
+      }
+    },
+    elements: {
+      point: {
+        radius: 4,
+        hoverRadius: 6,
+      },
+      line: {
+        tension: 0.4
+      }
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">📈 Grafik Tracking</h2>
+          <p className="mt-1 text-sm text-gray-600">Visualisasi data absensi dengan chart interaktif</p>
+        </div>
+        <div className="flex space-x-3">
+          <select
+            value={selectedPeriod}
+            onChange={(e) => setSelectedPeriod(e.target.value)}
+            className="border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+          >
+            <option value="last-7-days">7 Hari Terakhir</option>
+            <option value="last-30-days">30 Hari Terakhir</option>
+            <option value="current-month">Bulan Ini</option>
+          </select>
+        </div>
+      </div>
+
+      {/* Chart Display */}
+      <div className="bg-white shadow rounded-lg p-6">
+        <div style={{ height: '400px' }}>
+          {chartData.labels.length > 0 ? (
+            <Line data={chartData} options={chartOptions} />
+          ) : (
+            <div className="flex items-center justify-center h-full">
+              <p className="text-gray-500">Tidak ada data untuk periode yang dipilih</p>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Chart Insights */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="bg-white shadow rounded-lg p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">📊 Insights</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Rata-rata Hadir/Hari:</span>
+              <span className="text-sm font-medium">
+                {(() => {
+                  const totalPresent = records.filter((r: AttendanceRecord) => r.type === 'attendance' && r.status === 'present').length;
+                  const totalDays = Math.ceil((new Date(dateRange.end).getTime() - new Date(dateRange.start).getTime()) / (1000 * 60 * 60 * 24)) + 1;
+                  return totalDays > 0 ? (totalPresent / totalDays).toFixed(1) : '0';
+                })()}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Attendance Rate:</span>
+              <span className="text-sm font-medium text-green-600">
+                {(() => {
+                  const totalAttendance = records.filter((r: AttendanceRecord) => r.type === 'attendance').length;
+                  const presentCount = records.filter((r: AttendanceRecord) => r.type === 'attendance' && r.status === 'present').length;
+                  return totalAttendance > 0 ? ((presentCount / totalAttendance) * 100).toFixed(1) : '0.0';
+                })()}%
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Hari dengan Tingkat Hadir Tertinggi:</span>
+              <span className="text-sm font-medium">
+                {(() => {
+                  const attendanceByDay = records.reduce((acc: Record<string, number>, r: AttendanceRecord) => {
+                    if (r.type === 'attendance' && r.status === 'present') {
+                      acc[r.date] = (acc[r.date] || 0) + 1;
+                    }
+                    return acc;
+                  }, {});
+                  
+                  const maxDay = Object.keys(attendanceByDay).reduce((a, b) => 
+                    attendanceByDay[a] > attendanceByDay[b] ? a : b, 'N/A'
+                  );
+                  
+                  return maxDay !== 'N/A' ? new Date(maxDay).toLocaleDateString('id-ID') : 'N/A';
+                })()}
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white shadow rounded-lg p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">🎯 Trend Analysis</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Trend Attendance:</span>
+              <span className="text-sm font-medium text-green-600">
+                📈 Stabil
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Total Records:</span>
+              <span className="text-sm font-medium">{records.length}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Coverage:</span>
+              <span className="text-sm font-medium">
+                {Math.ceil((new Date(dateRange.end).getTime() - new Date(dateRange.start).getTime()) / (1000 * 60 * 60 * 24)) + 1} hari
+              </span>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white shadow rounded-lg p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">⚡ Quick Stats</h3>
+          <div className="space-y-3">
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Cuti Approved:</span>
+              <span className="text-sm font-medium text-blue-600">
+                {records.filter((r: AttendanceRecord) => r.type === 'leave' && r.leaveStatus === 'approved').length}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Izin Approved:</span>
+              <span className="text-sm font-medium text-purple-600">
+                {records.filter((r: AttendanceRecord) => r.type === 'permission' && r.permissionStatus === 'approved').length}
+              </span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-sm text-gray-600">Pending Approval:</span>
+              <span className="text-sm font-medium text-yellow-600">
+                {records.filter((r: AttendanceRecord) => (r.leaveStatus === 'pending' || r.permissionStatus === 'pending')).length}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+// Leave & Permission Component with 2-level Approval
+const LeavePermissionComponent = ({
+  employees, leaves, permissions, setLeaves, setPermissions, formatCurrency
+}: any) => {
+  const [activeForm, setActiveForm] = useState<'leave' | 'permission' | null>(null);
+  const [formData, setFormData] = useState({
+    employeeId: '',
+    type: '',
+    startDate: '',
+    endDate: '',
+    reason: '',
+    startTime: '',
+    endTime: ''
+  });
+  const [approvalData, setApprovalData] = useState({
+    leaveId: '',
+    permissionId: '',
+    level: 1,
+    action: 'approve' as 'approve' | 'reject',
+    notes: '',
+    approverName: ''
+  });
+
+  const handleSubmitLeave = () => {
+    if (!formData.employeeId || !formData.startDate || !formData.endDate || !formData.type) {
+      alert('Mohon lengkapi semua field yang diperlukan');
+      return;
+    }
+
+    const newLeave: Leave = {
+      id: Date.now().toString(),
+      employeeId: formData.employeeId,
+      startDate: formData.startDate,
+      endDate: formData.endDate,
+      type: formData.type as any,
+      status: 'pending',
+      reason: formData.reason,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    const updatedLeaves = [...leaves, newLeave];
+    setLeaves(updatedLeaves);
+    setToStorage('leaves', updatedLeaves);
+    
+    // Reset form
+    setFormData({
+      employeeId: '',
+      type: '',
+      startDate: '',
+      endDate: '',
+      reason: '',
+      startTime: '',
+      endTime: ''
+    });
+    setActiveForm(null);
+    
+    alert('Pengajuan cuti berhasil dikirim untuk approval!');
+  };
+
+  const handleSubmitPermission = () => {
+    if (!formData.employeeId || !formData.startDate || !formData.type || !formData.startTime || !formData.endTime) {
+      alert('Mohon lengkapi semua field yang diperlukan');
+      return;
+    }
+
+    const newPermission: Permission = {
+      id: Date.now().toString(),
+      employeeId: formData.employeeId,
+      date: formData.startDate,
+      startTime: formData.startTime,
+      endTime: formData.endTime,
+      type: formData.type as any,
+      status: 'pending',
+      reason: formData.reason,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+
+    const updatedPermissions = [...permissions, newPermission];
+    setPermissions(updatedPermissions);
+    setToStorage('permissions', updatedPermissions);
+    
+    // Reset form
+    setFormData({
+      employeeId: '',
+      type: '',
+      startDate: '',
+      endDate: '',
+      reason: '',
+      startTime: '',
+      endTime: ''
+    });
+    setActiveForm(null);
+    
+    alert('Pengajuan ijin berhasil dikirim untuk approval!');
+  };
+
+  const handleApproval = () => {
+    const { level, action, notes, approverName } = approvalData;
+    
+    if (action === 'approve') {
+      if (level === 1) {
+        // Level 1 approval
+        if (approvalData.leaveId) {
+          const updatedLeaves = leaves.map((leave: Leave) => 
+            leave.id === approvalData.leaveId 
+              ? { 
+                  ...leave, 
+                  status: 'approved',
+                  level1Approval: {
+                    approvedBy: approverName,
+                    approvedAt: new Date().toISOString(),
+                    notes: notes
+                  }
+                }
+              : leave
+          );
+          setLeaves(updatedLeaves);
+          setToStorage('leaves', updatedLeaves);
+        }
+        if (approvalData.permissionId) {
+          const updatedPermissions = permissions.map((perm: Permission) => 
+            perm.id === approvalData.permissionId 
+              ? { 
+                  ...perm, 
+                  status: 'approved',
+                  level1Approval: {
+                    approvedBy: approverName,
+                    approvedAt: new Date().toISOString(),
+                    notes: notes
+                  }
+                }
+              : perm
+          );
+          setPermissions(updatedPermissions);
+          setToStorage('permissions', updatedPermissions);
+        }
+      } else {
+        // Level 2 approval
+        if (approvalData.leaveId) {
+          const updatedLeaves = leaves.map((leave: Leave) => 
+            leave.id === approvalData.leaveId 
+              ? { 
+                  ...leave, 
+                  status: 'approved',
+                  level2Approval: {
+                    approvedBy: approverName,
+                    approvedAt: new Date().toISOString(),
+                    notes: notes
+                  }
+                }
+              : leave
+          );
+          setLeaves(updatedLeaves);
+          setToStorage('leaves', updatedLeaves);
+        }
+        if (approvalData.permissionId) {
+          const updatedPermissions = permissions.map((perm: Permission) => 
+            perm.id === approvalData.permissionId 
+              ? { 
+                  ...perm, 
+                  status: 'approved',
+                  level2Approval: {
+                    approvedBy: approverName,
+                    approvedAt: new Date().toISOString(),
+                    notes: notes
+                  }
+                }
+              : perm
+          );
+          setPermissions(updatedPermissions);
+          setToStorage('permissions', updatedPermissions);
+        }
+      }
+    } else {
+      // Rejection
+      if (approvalData.leaveId) {
+        const updatedLeaves = leaves.map((leave: Leave) => 
+          leave.id === approvalData.leaveId 
+            ? { 
+                ...leave, 
+                status: 'rejected',
+                rejectedReason: notes
+              }
+            : leave
+        );
+        setLeaves(updatedLeaves);
+        setToStorage('leaves', updatedLeaves);
+      }
+      if (approvalData.permissionId) {
+        const updatedPermissions = permissions.map((perm: Permission) => 
+          perm.id === approvalData.permissionId 
+            ? { 
+                ...perm, 
+                status: 'rejected',
+                rejectedReason: notes
+              }
+            : perm
+        );
+        setPermissions(updatedPermissions);
+        setToStorage('permissions', updatedPermissions);
+      }
+    }
+
+    setApprovalData({
+      leaveId: '',
+      permissionId: '',
+      level: 1,
+      action: 'approve',
+      notes: '',
+      approverName: ''
+    });
+
+    alert(`Pengajuan ${action === 'approve' ? 'disetujui' : 'ditolak'}!`);
+  };
+
+  const getTypeName = (type: string, category: 'leave' | 'permission') => {
+    if (category === 'leave') {
+      const types = {
+        'annual': 'Cuti Tahunan',
+        'sick': 'Cuti Sakit',
+        'personal': 'Cuti Personal',
+        'maternity': 'Cuti Melahirkan',
+        'paternity': 'Cuti Ayah',
+        'emergency': 'Cuti Darurat'
+      };
+      return types[type as keyof typeof types] || type;
+    } else {
+      const types = {
+        'urgent': 'Ijin Mendesak',
+        'appointment': 'Ijin Janji',
+        'personal': 'Ijin Pribadi',
+        'family': 'Ijin Keluarga',
+        'health': 'Ijin Kesehatan'
+      };
+      return types[type as keyof typeof types] || type;
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold text-gray-900">📋 Manajemen Cuti & Izin</h2>
+          <p className="mt-1 text-sm text-gray-600">Sistem cuti dan ijin dengan 2-level approval workflow</p>
+        </div>
+        <div className="flex space-x-3">
+          <button
+            onClick={() => setActiveForm('leave')}
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500"
+          >
+            🏖️ Ajukan Cuti
+          </button>
+          <button
+            onClick={() => setActiveForm('permission')}
+            className="bg-purple-600 text-white px-4 py-2 rounded-lg hover:bg-purple-700 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          >
+            📋 Ajukan Izin
+          </button>
+        </div>
+      </div>
+
+      {/* Forms */}
+      {activeForm === 'leave' && (
+        <div className="bg-white shadow rounded-lg p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">🏖️ Form Pengajuan Cuti</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Karyawan</label>
+              <select
+                value={formData.employeeId}
+                onChange={(e) => setFormData({...formData, employeeId: e.target.value})}
+                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Pilih Karyawan</option>
+                {employees.filter((emp: Employee) => emp.status === 'active').map((employee: Employee) => (
+                  <option key={employee.id} value={employee.id}>
+                    {employee.name} - {employee.position}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Jenis Cuti</label>
+              <select
+                value={formData.type}
+                onChange={(e) => setFormData({...formData, type: e.target.value})}
+                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              >
+                <option value="">Pilih Jenis Cuti</option>
+                <option value="annual">Cuti Tahunan</option>
+                <option value="sick">Cuti Sakit</option>
+                <option value="personal">Cuti Personal</option>
+                <option value="maternity">Cuti Melahirkan</option>
+                <option value="paternity">Cuti Ayah</option>
+                <option value="emergency">Cuti Darurat</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Tanggal Mulai</label>
+              <input
+                type="date"
+                value={formData.startDate}
+                onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Tanggal Selesai</label>
+              <input
+                type="date"
+                value={formData.endDate}
+                onChange={(e) => setFormData({...formData, endDate: e.target.value})}
+                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Alasan</label>
+              <textarea
+                value={formData.reason}
+                onChange={(e) => setFormData({...formData, reason: e.target.value})}
+                rows={3}
+                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Jelaskan alasan pengambilan cuti..."
+              />
+            </div>
+          </div>
+          <div className="mt-4 flex space-x-3">
+            <button
+              onClick={handleSubmitLeave}
+              className="bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700"
+            >
+              Submit Cuti
+            </button>
+            <button
+              onClick={() => setActiveForm(null)}
+              className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {activeForm === 'permission' && (
+        <div className="bg-white shadow rounded-lg p-6">
+          <h3 className="text-lg font-medium text-gray-900 mb-4">📋 Form Pengajuan Izin</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Karyawan</label>
+              <select
+                value={formData.employeeId}
+                onChange={(e) => setFormData({...formData, employeeId: e.target.value})}
+                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500"
+              >
+                <option value="">Pilih Karyawan</option>
+                {employees.filter((emp: Employee) => emp.status === 'active').map((employee: Employee) => (
+                  <option key={employee.id} value={employee.id}>
+                    {employee.name} - {employee.position}
+                  </option>
+                ))}
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Jenis Izin</label>
+              <select
+                value={formData.type}
+                onChange={(e) => setFormData({...formData, type: e.target.value})}
+                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500"
+              >
+                <option value="">Pilih Jenis Izin</option>
+                <option value="urgent">Ijin Mendesak</option>
+                <option value="appointment">Ijin Janji</option>
+                <option value="personal">Ijin Pribadi</option>
+                <option value="family">Ijin Keluarga</option>
+                <option value="health">Ijin Kesehatan</option>
+              </select>
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Tanggal</label>
+              <input
+                type="date"
+                value={formData.startDate}
+                onChange={(e) => setFormData({...formData, startDate: e.target.value})}
+                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Jam Mulai</label>
+              <input
+                type="time"
+                value={formData.startTime}
+                onChange={(e) => setFormData({...formData, startTime: e.target.value})}
+                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500"
+              />
+            </div>
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Jam Selesai</label>
+              <input
+                type="time"
+                value={formData.endTime}
+                onChange={(e) => setFormData({...formData, endTime: e.target.value})}
+                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500"
+              />
+            </div>
+            <div className="md:col-span-2">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Alasan</label>
+              <textarea
+                value={formData.reason}
+                onChange={(e) => setFormData({...formData, reason: e.target.value})}
+                rows={3}
+                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-purple-500 focus:border-purple-500"
+                placeholder="Jelaskan alasan pengambilan izin..."
+              />
+            </div>
+          </div>
+          <div className="mt-4 flex space-x-3">
+            <button
+              onClick={handleSubmitPermission}
+              className="bg-purple-600 text-white px-4 py-2 rounded-md hover:bg-purple-700"
+            >
+              Submit Izin
+            </button>
+            <button
+              onClick={() => setActiveForm(null)}
+              className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Approval Section */}
+      <div className="bg-white shadow rounded-lg p-6">
+        <h3 className="text-lg font-medium text-gray-900 mb-4">✅ 2-Level Approval System</h3>
+        
+        {/* Pending Approvals */}
+        <div className="mb-6">
+          <h4 className="text-md font-medium text-gray-800 mb-3">📋 Menunggu Approval</h4>
+          
+          {/* Pending Leaves */}
+          <div className="mb-4">
+            <h5 className="text-sm font-medium text-gray-700 mb-2">Cuti Pending:</h5>
+            {leaves.filter((leave: Leave) => leave.status === 'pending').map((leave: Leave) => {
+              const employee = employees.find((emp: Employee) => emp.id === leave.employeeId);
+              return (
+                <div key={leave.id} className="border border-yellow-200 rounded-lg p-3 mb-2 bg-yellow-50">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-medium">{employee?.name} - {getTypeName(leave.type, 'leave')}</p>
+                      <p className="text-sm text-gray-600">
+                        {leave.startDate} s/d {leave.endDate}
+                      </p>
+                      <p className="text-sm text-gray-600">Alasan: {leave.reason}</p>
+                    </div>
+                    <button
+                      onClick={() => setApprovalData({...approvalData, leaveId: leave.id, permissionId: '', level: 1})}
+                      className="bg-yellow-600 text-white px-3 py-1 rounded text-sm hover:bg-yellow-700"
+                    >
+                      Approve Level 1
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+
+          {/* Pending Permissions */}
+          <div>
+            <h5 className="text-sm font-medium text-gray-700 mb-2">Izin Pending:</h5>
+            {permissions.filter((perm: Permission) => perm.status === 'pending').map((perm: Permission) => {
+              const employee = employees.find((emp: Employee) => emp.id === perm.employeeId);
+              return (
+                <div key={perm.id} className="border border-orange-200 rounded-lg p-3 mb-2 bg-orange-50">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <p className="font-medium">{employee?.name} - {getTypeName(perm.type, 'permission')}</p>
+                      <p className="text-sm text-gray-600">
+                        {perm.date} ({perm.startTime} - {perm.endTime})
+                      </p>
+                      <p className="text-sm text-gray-600">Alasan: {perm.reason}</p>
+                    </div>
+                    <button
+                      onClick={() => setApprovalData({...approvalData, permissionId: perm.id, leaveId: '', level: 1})}
+                      className="bg-orange-600 text-white px-3 py-1 rounded text-sm hover:bg-orange-700"
+                    >
+                      Approve Level 1
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Approval Form */}
+        {(approvalData.leaveId || approvalData.permissionId) && (
+          <div className="border border-blue-200 rounded-lg p-4 bg-blue-50">
+            <h4 className="text-md font-medium text-gray-800 mb-3">🔍 Review & Approval</h4>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Level Approval</label>
+                <select
+                  value={approvalData.level}
+                  onChange={(e) => setApprovalData({...approvalData, level: Number(e.target.value)})}
+                  className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value={1}>Level 1 (Supervisor)</option>
+                  <option value={2}>Level 2 (Manager)</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Nama Approver</label>
+                <input
+                  type="text"
+                  value={approvalData.approverName}
+                  onChange={(e) => setApprovalData({...approvalData, approverName: e.target.value})}
+                  className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                  placeholder="Nama approver..."
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Action</label>
+                <select
+                  value={approvalData.action}
+                  onChange={(e) => setApprovalData({...approvalData, action: e.target.value as any})}
+                  className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                >
+                  <option value="approve">Approve</option>
+                  <option value="reject">Reject</option>
+                </select>
+              </div>
+            </div>
+            <div className="mt-4">
+              <label className="block text-sm font-medium text-gray-700 mb-2">Catatan/Notes</label>
+              <textarea
+                value={approvalData.notes}
+                onChange={(e) => setApprovalData({...approvalData, notes: e.target.value})}
+                rows={2}
+                className="w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
+                placeholder="Catatan approval..."
+              />
+            </div>
+            <div className="mt-4 flex space-x-3">
+              <button
+                onClick={handleApproval}
+                className={`px-4 py-2 rounded-md text-white ${
+                  approvalData.action === 'approve' 
+                    ? 'bg-green-600 hover:bg-green-700' 
+                    : 'bg-red-600 hover:bg-red-700'
+                }`}
+              >
+                {approvalData.action === 'approve' ? '✅ Approve' : '❌ Reject'}
+              </button>
+              <button
+                onClick={() => setApprovalData({
+                  leaveId: '',
+                  permissionId: '',
+                  level: 1,
+                  action: 'approve',
+                  notes: '',
+                  approverName: ''
+                })}
+                className="bg-gray-600 text-white px-4 py-2 rounded-md hover:bg-gray-700"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* Statistics */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <span className="text-blue-600 text-2xl">🏖️</span>
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Total Cuti</dt>
+                  <dd className="text-lg font-medium text-gray-900">{leaves.length}</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <span className="text-purple-600 text-2xl">📋</span>
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Total Izin</dt>
+                  <dd className="text-lg font-medium text-gray-900">{permissions.length}</dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <span className="text-yellow-600 text-2xl">⏳</span>
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Pending Approval</dt>
+                  <dd className="text-lg font-medium text-gray-900">
+                    {[...leaves, ...permissions].filter((item: any) => item.status === 'pending').length}
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-white overflow-hidden shadow rounded-lg">
+          <div className="p-5">
+            <div className="flex items-center">
+              <div className="flex-shrink-0">
+                <span className="text-green-600 text-2xl">✅</span>
+              </div>
+              <div className="ml-5 w-0 flex-1">
+                <dl>
+                  <dt className="text-sm font-medium text-gray-500 truncate">Approved</dt>
+                  <dd className="text-lg font-medium text-gray-900">
+                    {[...leaves, ...permissions].filter((item: any) => item.status === 'approved').length}
+                  </dd>
+                </dl>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   );
@@ -699,128 +1760,11 @@ const SettingsConfigComponent = () => {
         </div>
       </div>
 
-      {/* Geo-fence Settings */}
-      <div className="bg-white shadow rounded-lg p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">📍 Geo-fence Configuration</h3>
-        <div className="space-y-4">
-          <div className="flex items-center">
-            <input
-              type="checkbox"
-              id="geoFence"
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-              checked={settings.geoFence.enabled}
-              onChange={(e) => setSettings({
-                ...settings, 
-                geoFence: {...settings.geoFence, enabled: e.target.checked}
-              })}
-            />
-            <label htmlFor="geoFence" className="ml-2 block text-sm text-gray-900">
-              Aktifkan Geo-fence validation
-            </label>
-          </div>
-          {settings.geoFence.enabled && (
-            <div className="ml-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Radius (meter)</label>
-                <input
-                  type="number"
-                  className="block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500"
-                  value={settings.geoFence.radius}
-                  onChange={(e) => setSettings({
-                    ...settings, 
-                    geoFence: {...settings.geoFence, radius: Number(e.target.value)}
-                  })}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* Save Button */}
       <div className="flex justify-end">
         <button className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500">
           💾 Simpan Pengaturan
         </button>
-      </div>
-    </div>
-  );
-};
-
-// Leave Management Component
-const LeaveManagementComponent = ({ employees, formatCurrency }: any) => {
-  const [leaveTypes] = useState([
-    { id: 'annual', name: 'Cuti Tahunan', days: 12, color: 'blue' },
-    { id: 'sick', name: 'Cuti Sakit', days: 0, color: 'red' },
-    { id: 'emergency', name: 'Cuti Darurat', days: 0, color: 'yellow' },
-    { id: 'maternity', name: 'Cuti Melahirkan', days: 90, color: 'pink' },
-  ]);
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">📋 Manajemen Cuti & Izin</h2>
-        <p className="mt-1 text-sm text-gray-600">Kelola cuti dan izin karyawan</p>
-      </div>
-
-      {/* Leave Types */}
-      <div className="bg-white shadow rounded-lg">
-        <div className="px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-medium text-gray-900">📅 Tipe Cuti</h3>
-        </div>
-        <div className="p-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-            {leaveTypes.map((type) => (
-              <div key={type.id} className={`border-l-4 border-${type.color}-500 bg-${type.color}-50 p-4 rounded-lg`}>
-                <h4 className="font-medium text-gray-900">{type.name}</h4>
-                <p className="text-sm text-gray-600">
-                  {type.days > 0 ? `${type.days} hari/tahun` : 'Unlimited'}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Coming Soon */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-        <h3 className="text-lg font-medium text-yellow-800 mb-2">🚧 Fitur Coming Soon</h3>
-        <p className="text-yellow-700">
-          Fitur manajemen cuti lengkap sedang dalam pengembangan. Akan includes:
-        </p>
-        <ul className="mt-2 text-yellow-700 list-disc list-inside">
-          <li>Leave request form dengan approval workflow</li>
-          <li>Leave balance tracking real-time</li>
-          <li>Multi-level approval process</li>
-          <li>Leave calendar & planning</li>
-        </ul>
-      </div>
-    </div>
-  );
-};
-
-// Overtime Management Component
-const OvertimeManagementComponent = ({ employees, attendance, formatCurrency }: any) => {
-  return (
-    <div className="space-y-6">
-      <div>
-        <h2 className="text-2xl font-bold text-gray-900">⏰ Manajemen Lembur</h2>
-        <p className="mt-1 text-sm text-gray-600">Kelola jam lembur karyawan</p>
-      </div>
-
-      {/* Coming Soon */}
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
-        <h3 className="text-lg font-medium text-yellow-800 mb-2">🚧 Fitur Coming Soon</h3>
-        <p className="text-yellow-700">
-          Fitur manajemen lembur lengkap sedang dalam pengembangan. Akan includes:
-        </p>
-        <ul className="mt-2 text-yellow-700 list-disc list-inside">
-          <li>Overtime request dengan lokasi & alasan</li>
-          <li>Multi-step approval workflow</li>
-          <li>Auto-calculation jam lembur</li>
-          <li>Batch approval untuk multiple karyawan</li>
-          <li>Overtime reports untuk payroll</li>
-        </ul>
       </div>
     </div>
   );
