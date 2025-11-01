@@ -47,13 +47,35 @@ export interface AppSettings {
       period: string;
     };
   };
+  companyIdentity: {
+    name: string;
+    address: string;
+    phone: string;
+    email: string;
+    website: string;
+    taxId: string;
+    registrationNumber: string;
+    description: string;
+    foundedYear: string;
+  };
 }
 
 export const getAppSettings = (): AppSettings => {
   const settings = getFromStorage('appSettings');
   return settings || {
     appName: 'My Office',
-    logoData: null
+    logoData: null,
+    companyIdentity: {
+      name: 'My Office HRD',
+      address: '',
+      phone: '',
+      email: '',
+      website: '',
+      taxId: '',
+      registrationNumber: '',
+      description: '',
+      foundedYear: ''
+    }
   };
 };
 

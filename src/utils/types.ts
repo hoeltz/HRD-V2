@@ -120,9 +120,76 @@ export interface Leave {
   employeeId: string;
   startDate: string;
   endDate: string;
-  type: 'annual' | 'sick' | 'personal';
+  type: 'annual' | 'sick' | 'personal' | 'maternity' | 'paternity' | 'emergency';
   status: 'pending' | 'approved' | 'rejected';
   reason: string;
+  approvedBy?: string;
+  level1Approval?: {
+    approvedBy: string;
+    approvedAt: string;
+    notes?: string;
+  };
+  level2Approval?: {
+    approvedBy: string;
+    approvedAt: string;
+    notes?: string;
+  };
+  rejectedReason?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Permission {
+  id: string;
+  employeeId: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  type: 'urgent' | 'appointment' | 'personal' | 'family' | 'health';
+  reason: string;
+  status: 'pending' | 'approved' | 'rejected';
+  approvedBy?: string;
+  level1Approval?: {
+    approvedBy: string;
+    approvedAt: string;
+    notes?: string;
+  };
+  level2Approval?: {
+    approvedBy: string;
+    approvedAt: string;
+    notes?: string;
+  };
+  rejectedReason?: string;
+  createdAt: string;
+  updatedAt: string;
+}
+
+// Combined Attendance + Leave + Permission interface for comprehensive reporting
+export interface AttendanceRecord {
+  id: string;
+  employeeId: string;
+  date: string;
+  type: 'attendance' | 'leave' | 'permission';
+  // For attendance
+  checkIn?: string;
+  checkOut?: string;
+  hoursWorked?: number;
+  status?: 'present' | 'absent' | 'late';
+  // For leave
+  leaveId?: string;
+  leaveType?: string;
+  leaveStatus?: 'approved' | 'pending' | 'rejected';
+  // For permission  
+  permissionId?: string;
+  permissionType?: string;
+  permissionStatus?: 'approved' | 'pending' | 'rejected';
+  permissionStartTime?: string;
+  permissionEndTime?: string;
+  // Common fields
+  approvedBy?: string;
+  reason?: string;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface Salary {

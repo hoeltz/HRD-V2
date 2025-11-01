@@ -38,6 +38,19 @@ const Settings: React.FC = () => {
     }
   });
 
+  // Company identity settings
+  const [companyIdentity, setCompanyIdentity] = useState(settings?.companyIdentity || {
+    name: 'My Office HRD',
+    address: '',
+    phone: '',
+    email: '',
+    website: '',
+    taxId: '',
+    registrationNumber: '',
+    description: '',
+    foundedYear: ''
+  });
+
   useEffect(() => {
     // Load notification settings
     const appSettings = getFromStorage('settings') || {};
@@ -56,6 +69,11 @@ const Settings: React.FC = () => {
     if (settings?.salarySlipLabels) {
       setSalaryLabels(settings.salarySlipLabels);
     }
+
+    // Initialize company identity from settings
+    if (settings?.companyIdentity) {
+      setCompanyIdentity(settings.companyIdentity);
+    }
   }, [user, settings]);
 
   const handleAppNameChange = (e: React.FormEvent) => {
@@ -68,6 +86,12 @@ const Settings: React.FC = () => {
     e.preventDefault();
     updateSettings({ salarySlipLabels: salaryLabels });
     alert('Label slip gaji berhasil diperbarui!');
+  };
+
+  const handleCompanyIdentityChange = (e: React.FormEvent) => {
+    e.preventDefault();
+    updateSettings({ companyIdentity });
+    alert('Identitas perusahaan berhasil diperbarui!');
   };
 
   const handleLogoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -286,6 +310,167 @@ const Settings: React.FC = () => {
               )}
             </div>
           </div>
+        </div>
+      </div>
+
+      {/* Company Identity Settings */}
+      <div className="bg-white shadow rounded-lg">
+        <div className="px-6 py-4 border-b border-gray-200">
+          <h2 className="text-lg font-medium text-gray-900">🏢 Identitas Perusahaan</h2>
+        </div>
+        <div className="p-6">
+          <form onSubmit={handleCompanyIdentityChange} className="space-y-6">
+            {/* Basic Information */}
+            <div>
+              <h3 className="text-md font-medium text-gray-800 mb-4">Informasi Dasar</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nama Perusahaan</label>
+                  <input
+                    type="text"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={companyIdentity.name}
+                    onChange={(e) => setCompanyIdentity({
+                      ...companyIdentity,
+                      name: e.target.value
+                    })}
+                    placeholder="Nama perusahaan"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Tahun Berdiri</label>
+                  <input
+                    type="text"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={companyIdentity.foundedYear}
+                    onChange={(e) => setCompanyIdentity({
+                      ...companyIdentity,
+                      foundedYear: e.target.value
+                    })}
+                    placeholder="2020"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Contact Information */}
+            <div className="border-t pt-6">
+              <h3 className="text-md font-medium text-gray-800 mb-4">Informasi Kontak</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Alamat</label>
+                  <textarea
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    rows={3}
+                    value={companyIdentity.address}
+                    onChange={(e) => setCompanyIdentity({
+                      ...companyIdentity,
+                      address: e.target.value
+                    })}
+                    placeholder="Alamat lengkap perusahaan"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nomor Telepon</label>
+                  <input
+                    type="tel"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={companyIdentity.phone}
+                    onChange={(e) => setCompanyIdentity({
+                      ...companyIdentity,
+                      phone: e.target.value
+                    })}
+                    placeholder="+62-21-xxxx-xxxx"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <input
+                    type="email"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={companyIdentity.email}
+                    onChange={(e) => setCompanyIdentity({
+                      ...companyIdentity,
+                      email: e.target.value
+                    })}
+                    placeholder="info@perusahaan.com"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Website</label>
+                  <input
+                    type="url"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={companyIdentity.website}
+                    onChange={(e) => setCompanyIdentity({
+                      ...companyIdentity,
+                      website: e.target.value
+                    })}
+                    placeholder="https://www.perusahaan.com"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Legal Information */}
+            <div className="border-t pt-6">
+              <h3 className="text-md font-medium text-gray-800 mb-4">Informasi Legal</h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">NPWP</label>
+                  <input
+                    type="text"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={companyIdentity.taxId}
+                    onChange={(e) => setCompanyIdentity({
+                      ...companyIdentity,
+                      taxId: e.target.value
+                    })}
+                    placeholder="01.234.567.8-901.000"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Nomor Registrasi</label>
+                  <input
+                    type="text"
+                    className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                    value={companyIdentity.registrationNumber}
+                    onChange={(e) => setCompanyIdentity({
+                      ...companyIdentity,
+                      registrationNumber: e.target.value
+                    })}
+                    placeholder="AHU-xxxx-xx-xxxx"
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="border-t pt-6">
+              <h3 className="text-md font-medium text-gray-800 mb-4">Deskripsi Perusahaan</h3>
+              <div>
+                <textarea
+                  className="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:ring-blue-500 focus:border-blue-500 sm:text-sm"
+                  rows={4}
+                  value={companyIdentity.description}
+                  onChange={(e) => setCompanyIdentity({
+                    ...companyIdentity,
+                    description: e.target.value
+                  })}
+                  placeholder="Deskripsi singkat tentang perusahaan"
+                />
+              </div>
+            </div>
+
+            <div className="flex justify-end">
+              <button
+                type="submit"
+                className="bg-green-600 text-white px-4 py-2 rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2"
+              >
+                Simpan Identitas Perusahaan
+              </button>
+            </div>
+          </form>
         </div>
       </div>
 

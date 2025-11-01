@@ -30,6 +30,17 @@ export const useAppSettings = () => {
           netSalary: 'Gaji Bersih',
           period: 'Periode',
         },
+      },
+      companyIdentity: {
+        name: 'My Office HRD',
+        address: '',
+        phone: '',
+        email: '',
+        website: '',
+        taxId: '',
+        registrationNumber: '',
+        description: '',
+        foundedYear: ''
       }
     };
     setSettings(defaultSettings);
